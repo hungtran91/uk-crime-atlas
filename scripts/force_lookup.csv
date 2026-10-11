@@ -1,0 +1,44 @@
+force_id,name,police_name,ons_code,ons_name
+metropolitan,Metropolitan Police,Metropolitan Police Service,E23000001,Metropolitan Police
+cumbria,Cumbria,Cumbria Constabulary,E23000002,Cumbria
+lancashire,Lancashire,Lancashire Constabulary,E23000003,Lancashire
+merseyside,Merseyside,Merseyside Police,E23000004,Merseyside
+greater-manchester,Greater Manchester,Greater Manchester Police,E23000005,Greater Manchester
+cheshire,Cheshire,Cheshire Constabulary,E23000006,Cheshire
+northumbria,Northumbria,Northumbria Police,E23000007,Northumbria
+durham,Durham,Durham Constabulary,E23000008,Durham
+north-yorkshire,North Yorkshire,North Yorkshire Police,E23000009,North Yorkshire
+west-yorkshire,West Yorkshire,West Yorkshire Police,E23000010,West Yorkshire
+south-yorkshire,South Yorkshire,South Yorkshire Police,E23000011,South Yorkshire
+humberside,Humberside,Humberside Police,E23000012,Humberside
+cleveland,Cleveland,Cleveland Police,E23000013,Cleveland
+west-midlands,West Midlands,West Midlands Police,E23000014,West Midlands
+staffordshire,Staffordshire,Staffordshire Police,E23000015,Staffordshire
+west-mercia,West Mercia,West Mercia Police,E23000016,West Mercia
+warwickshire,Warwickshire,Warwickshire Police,E23000017,Warwickshire
+derbyshire,Derbyshire,Derbyshire Constabulary,E23000018,Derbyshire
+nottinghamshire,Nottinghamshire,Nottinghamshire Police,E23000019,Nottinghamshire
+lincolnshire,Lincolnshire,Lincolnshire Police,E23000020,Lincolnshire
+leicestershire,Leicestershire,Leicestershire Police,E23000021,Leicestershire
+northamptonshire,Northamptonshire,Northamptonshire Police,E23000022,Northamptonshire
+cambridgeshire,Cambridgeshire,Cambridgeshire Constabulary,E23000023,Cambridgeshire
+norfolk,Norfolk,Norfolk Constabulary,E23000024,Norfolk
+suffolk,Suffolk,Suffolk Constabulary,E23000025,Suffolk
+bedfordshire,Bedfordshire,Bedfordshire Police,E23000026,Bedfordshire
+hertfordshire,Hertfordshire,Hertfordshire Constabulary,E23000027,Hertfordshire
+essex,Essex,Essex Police,E23000028,Essex
+thames-valley,Thames Valley,Thames Valley Police,E23000029,Thames Valley
+hampshire,Hampshire,Hampshire Constabulary,E23000030,Hampshire
+surrey,Surrey,Surrey Police,E23000031,Surrey
+kent,Kent,Kent Police,E23000032,Kent
+sussex,Sussex,Sussex Police,E23000033,Sussex
+city-of-london,City of London,City of London Police,E23000034,"London, City of"
+devon-and-cornwall,Devon and Cornwall,Devon & Cornwall Police,E23000035,Devon & Cornwall
+avon-and-somerset,Avon and Somerset,Avon and Somerset Constabulary,E23000036,Avon and Somerset
+gloucestershire,Gloucestershire,Gloucestershire Constabulary,E23000037,Gloucestershire
+wiltshire,Wiltshire,Wiltshire Police,E23000038,Wiltshire
+dorset,Dorset,Dorset Police,E23000039,Dorset
+north-wales,North Wales,North Wales Police,W15000001,North Wales
+gwent,Gwent,Gwent Police,W15000002,Gwent
+south-wales,South Wales,South Wales Police,W15000003,South Wales
+dyfed-powys,Dyfed-Powys,Dyfed-Powys Police,W15000004,Dyfed-Powys
