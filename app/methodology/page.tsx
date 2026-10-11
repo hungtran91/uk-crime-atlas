@@ -59,6 +59,8 @@ export default function MethodologyPage() {
     .sort((a, b) => b.months.length - a.months.length || (a.id < b.id ? -1 : 1));
   const neverPublished = notPublished.filter((f) => f.months.length === months.length);
   const low = lowMonths(ds, meta.incompleteThreshold, LOW_SHARE);
+  // The changelog note below is about this one force-month, so it shows only while it is listed.
+  const northumbriaFebLow = low.some((l) => l.forceId === "northumbria" && l.month === "2026-02");
 
   const monthly = months.map((m) => ({
     nat: national(ds, m),
@@ -245,7 +247,7 @@ export default function MethodologyPage() {
             <p>No force-month in this window falls below the threshold.</p>
           )}
           <p>
-            The threshold is deliberately low so that a real fall is never removed. That means a month can be visibly
+            The threshold is deliberately low so that a real fall is unlikely to be removed. That means a month can be visibly
             low and still be kept.{" "}
             {low.length > 0
               ? `Kept force-months below ${fmt.share(LOW_SHARE)} of the force’s median, which should be read with care:`
@@ -282,6 +284,12 @@ export default function MethodologyPage() {
                 </tbody>
               </table>
             </div>
+          )}
+          {northumbriaFebLow && (
+            <p>
+              The <a href={CHANGELOG_URL}>data.police.uk changelog</a> lists Northumbria’s crime data for Feb 2026 as
+              not provided, although the archive contains a file for that month, so it may also be partial.
+            </p>
           )}
         </Section>
 
