@@ -128,18 +128,14 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
           <div className="card-h">
             <div className="titles">
               <h2 className="card-t">Top crime categories</h2>
-              <div className="card-s">England and Wales · {label} · recorded crimes</div>
+              <div className="card-s">
+                {data.reporting} reporting forces · {label} · recorded crimes
+              </div>
             </div>
           </div>
           <div className="card-b">
-            <TopCategories categories={data.topCategories} label={`Top crime categories by recorded crimes, ${label}`} />
+            <TopCategories categories={data.categories} label={`Top crime categories by recorded crimes, ${label}`} />
           </div>
-          {data.rest.names.length > 0 && (
-            <div className="card-f">
-              {data.rest.names.length} further categories: {fmt.int(data.rest.count)} crimes (
-              {data.rest.names.join(", ")})
-            </div>
-          )}
         </section>
       </div>
     </div>

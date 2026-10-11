@@ -1,8 +1,6 @@
 import type { Dataset } from "@/lib/data";
 import { binIndex, highestRate, monthOverMonth, national, nationalRateSeries, rankForces, rate } from "@/lib/metrics";
 
-export const TOP_CATEGORIES = 8;
-
 export interface OverviewForceRow {
   /** All null when the force has no data for the month. */
   rate: number | null;
@@ -31,8 +29,8 @@ export interface OverviewMonth {
   mom: { prevMonth: string; forces: number; pct: number | null; ratePoints: number | null } | null;
   highest: { forceId: string; name: string; rate: number; vsNational: number | null } | null;
   rows: Record<string, OverviewForceRow>;
-  topCategories: OverviewCategory[];
-  rest: { count: number; names: string[] };
+  /** Every category, largest first. */
+  categories: OverviewCategory[];
 }
 
 /** Everything the overview page needs for every month; small enough to send to the client. */
@@ -66,7 +64,7 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
   }
 
   const momByCategory = new Map(mom?.categories.map((c) => [c.category, c.pct]));
-  const sorted = nat.categories
+  const categories = nat.categories
     .slice()
     .sort((a, b) => b.count - a.count || (a.category < b.category ? -1 : 1))
     .map((c) => ({
@@ -76,7 +74,6 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
       per1000: rate(c.count, nat.population),
       momPct: momByCategory.get(c.category) ?? null,
     }));
-  const rest = sorted.slice(TOP_CATEGORIES);
 
   return {
     month,
@@ -87,8 +84,7 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
     mom: mom && { prevMonth: mom.prevMonth, forces: mom.forces, pct: mom.pct, ratePoints: mom.ratePoints },
     highest: top && { forceId: top.forceId, name: name(top.forceId), rate: top.rate, vsNational: top.vsNational },
     rows,
-    topCategories: sorted.slice(0, TOP_CATEGORIES),
-    rest: { count: rest.reduce((a, c) => a + c.count, 0), names: rest.map((c) => c.category) },
+    categories,
   };
 }
 

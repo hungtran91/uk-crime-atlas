@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { loadDataset } from "@/lib/data";
 import { loadMapGeometry, METROPOLITAN_ID } from "@/lib/geo";
 import { CITY_OF_LONDON_ID, highestRate, monthOverMonth, national, rankForces } from "@/lib/metrics";
-import { buildOverviewModel, TOP_CATEGORIES } from "@/lib/overview";
+import { buildOverviewModel } from "@/lib/overview";
 import { placeTooltip } from "@/lib/tooltip";
 
 const ds = loadDataset();
@@ -41,11 +41,10 @@ describe("buildOverviewModel", () => {
 
   it.each(ds.meta.months)("%s categories are sorted and add up to the national total", (month) => {
     const o = model.byMonth[month];
-    expect(o.topCategories).toHaveLength(Math.min(TOP_CATEGORIES, ds.categories.length));
-    const counts = o.topCategories.map((c) => c.count);
+    expect(o.categories.map((c) => c.category).sort()).toEqual(ds.categories);
+    const counts = o.categories.map((c) => c.count);
     expect(counts).toEqual([...counts].sort((a, b) => b - a));
-    expect(counts.reduce((a, b) => a + b, 0) + o.rest.count).toBe(o.total);
-    expect(o.topCategories.length + o.rest.names.length).toBe(ds.categories.length);
+    expect(counts.reduce((a, b) => a + b, 0)).toBe(o.total);
   });
 });
 
