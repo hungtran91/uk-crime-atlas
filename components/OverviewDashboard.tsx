@@ -1,19 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Delta from "@/components/cards/Delta";
 import Sparkline from "@/components/cards/Sparkline";
 import TopCategories from "@/components/charts/TopCategories";
 import FilterBar from "@/components/filters/FilterBar";
 import ChoroplethMap from "@/components/map/ChoroplethMap";
+import WithMonth from "@/components/WithMonth";
 import Legend from "@/components/map/Legend";
 import { fmt, monthLabel } from "@/lib/format";
 import type { MapGeometry } from "@/lib/geo";
+import { withMonth } from "@/lib/month";
 import type { OverviewModel } from "@/lib/overview";
 
-export default function OverviewDashboard({ model, geometry }: { model: OverviewModel; geometry: MapGeometry }) {
-  const [month, setMonth] = useState(model.latestMonth);
+interface Props {
+  model: OverviewModel;
+  geometry: MapGeometry;
+}
+
+export default function OverviewDashboard(props: Props) {
+  return (
+    <WithMonth months={props.model.months} latest={props.model.latestMonth}>
+      {(month, setMonth) => <OverviewView {...props} month={month} onMonthChange={setMonth} />}
+    </WithMonth>
+  );
+}
+
+function OverviewView({
+  model,
+  geometry,
+  month,
+  onMonthChange,
+}: Props & { month: string; onMonthChange: (month: string) => void }) {
+  const href = (path: string) => withMonth(path, month, model.latestMonth);
   const names = useMemo(() => Object.fromEntries(model.forces.map((f) => [f.id, f.name])), [model.forces]);
   const data = model.byMonth[month];
   const { mom, highest } = data;
@@ -34,7 +54,8 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
       <FilterBar
         months={model.months}
         month={month}
-        onMonthChange={setMonth}
+        latestMonth={model.latestMonth}
+        onMonthChange={onMonthChange}
         forces={model.forces}
         reporting={data.reporting}
       />
@@ -82,7 +103,7 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
             Highest rate <span className="subtle">· excl. City of London</span>
           </div>
           <div className="kpi-value name">
-            {highest ? <Link href={`/force/${highest.forceId}`}>{highest.name}</Link> : "—"}
+            {highest ? <Link href={href(`/force/${highest.forceId}`)}>{highest.name}</Link> : "—"}
           </div>
           <div />
           <div className="kpi-meta">
@@ -108,7 +129,7 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
             </div>
           </div>
           <div className="card-b">
-            <ChoroplethMap geometry={geometry} month={month} rows={data.rows} names={names} />
+            <ChoroplethMap geometry={geometry} month={month} latestMonth={model.latestMonth} rows={data.rows} names={names} />
             <Legend />
           </div>
           {missing.length > 0 && (
@@ -117,7 +138,7 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
                 <span className="sw nodata-fill" />
                 <span>
                   {missing.join(", ")}: no data published for {label}. National figures exclude{" "}
-                  {missing.length === 1 ? "this force" : "these forces"}. <Link href="/methodology">Methodology</Link>
+                  {missing.length === 1 ? "this force" : "these forces"}. <Link href={href("/methodology")}>Methodology</Link>
                 </span>
               </span>
             </div>

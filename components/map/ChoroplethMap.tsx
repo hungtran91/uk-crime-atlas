@@ -5,11 +5,13 @@ import { useId, useState, type FocusEvent, type MouseEvent } from "react";
 import Tooltip from "@/components/map/Tooltip";
 import { fmt, monthLabel, rankLabel } from "@/lib/format";
 import type { MapArea, MapGeometry } from "@/lib/geo";
+import { withMonth } from "@/lib/month";
 import type { OverviewForceRow } from "@/lib/overview";
 
 interface Props {
   geometry: MapGeometry;
   month: string;
+  latestMonth: string;
   rows: Record<string, OverviewForceRow>;
   names: Record<string, string>;
 }
@@ -20,7 +22,7 @@ interface Active {
   anchor: { x: number; y: number };
 }
 
-export default function ChoroplethMap({ geometry, month, rows, names }: Props) {
+export default function ChoroplethMap({ geometry, month, latestMonth, rows, names }: Props) {
   const [active, setActive] = useState<Active | null>(null);
   const tooltipId = useId();
   const row = active ? rows[active.id] : null;
@@ -32,7 +34,7 @@ export default function ChoroplethMap({ geometry, month, rows, names }: Props) {
     return (
       <Link
         key={a.id}
-        href={`/force/${a.id}`}
+        href={withMonth(`/force/${a.id}`, month, latestMonth)}
         prefetch={false}
         aria-label={label}
         aria-describedby={!inert && active?.id === a.id ? tooltipId : undefined}
