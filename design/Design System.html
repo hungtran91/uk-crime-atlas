@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas DS — Dashboard design system</title>
+<link rel="stylesheet" href="ds/atlas-ds.css">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="ds/atlas-ds.js"></script>
+<style>
+  html, body { margin: 0; }
+  .wrap { max-width: 1680px; margin: 0 auto; padding: 32px 24px 64px; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(620px, 1fr)); gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .col { padding: 24px; display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+  .sec { display: flex; flex-direction: column; gap: 12px; }
+  .sec-t { font-size: var(--fs-xs); font-weight: 500; color: var(--text-3); letter-spacing: .02em; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .tok { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-xs); }
+  .tok i { display: block; height: 36px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--border); }
+  .tok code { font-family: var(--mono); color: var(--text-2); font-size: 10.5px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body data-theme="dark">
+<div class="wrap">
+  <header style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:24px">
+    <div style="flex:1;min-width:320px">
+      <div class="brand" style="margin-bottom:8px"><span class="brand-mark"></span>Atlas DS <span class="subtle" style="font-weight:400">v1.0</span></div>
+      <h1 class="h1" style="font-size:28px">Dashboard design system</h1>
+      <p class="muted" style="max-width:720px;margin:8px 0 0;text-wrap:pretty">Neutral, data-dense foundations and components for analytical dashboards. First used by UK Crime Atlas; built to carry real estate and market dashboards without changes. Tokens live in <span class="mono">ds/atlas-ds.css</span>, chart helpers in <span class="mono">ds/atlas-ds.js</span>. Set <span class="mono">data-theme="light|dark"</span> on any container.</p>
+    </div>
+    <a href="UK Crime Atlas.html" class="btn">Open UK Crime Atlas →</a>
+  </header>
+  <div class="cols">
+    <div class="col" data-theme="dark" id="c-dark"></div>
+    <div class="col" data-theme="light" id="c-light"></div>
+  </div>
+</div>
+<script>
+const { fmt, delta, legendSeq, sparkline, barChart, lineChart, dotPlot } = AtlasDS;
+const tok = (v, name) => `<div class="tok"><i style="background:var(${v})"></i><span>${name}</span><code>${v}</code></div>`;
+
+function showcase(theme) {
+  return `
+  <div class="sec-t" style="border:0;padding:0;font-size:var(--fs-md);color:var(--text)"><span>${theme === 'dark' ? 'Dark' : 'Light'}</span></div>
+
+  <section class="sec"><div class="sec-t"><span>Surfaces & text</span></div>
+    <div class="sw-grid">${[['--bg','Background'],['--surface','Surface'],['--surface-2','Surface raised'],['--border','Border'],['--border-strong','Border strong'],['--text','Text'],['--text-2','Text secondary'],['--text-3','Text tertiary']].map(t => tok(...t)).join('')}</div></section>
+
+  <section class="sec"><div class="sec-t"><span>Semantic</span><span>Deltas take a polarity: crime up = bad, price up = good</span></div>
+    <div class="sw-grid">${[['--accent','Accent / focus'],['--pos','Positive'],['--neg','Negative'],['--nodata','No data']].map(t => tok(...t)).join('')}</div></section>
+
+  <section class="sec"><div class="sec-t"><span>Sequential scale · choropleth</span><span>7 classes · light reverses lightness</span></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr) 12px 1fr;gap:4px;font-size:var(--fs-xs)">
+      ${[1,2,3,4,5,6,7].map(i => `<div class="tok"><i style="background:var(--seq-${i});border-radius:${i===1?'4px 0 0 4px':i===7?'0 4px 4px 0':'0'};box-shadow:none"></i><code>seq-${i}</code></div>`).join('')}
+      <span></span><div class="tok"><i class="nodata-fill"></i><code>nodata</code></div></div></section>
+
+  <section class="sec"><div class="sec-t"><span>Categorical · charts</span><span>Equal lightness & chroma, hue varies</span></div>
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">${[1,2,3,4,5,6,7,8].map(i => `<div class="tok"><i style="background:var(--cat-${i});box-shadow:none"></i><code>cat-${i}</code></div>`).join('')}</div></section>
+
+  <section class="sec"><div class="sec-t"><span>Type · Geist / Geist Mono · tabular figures</span></div>
+    <div style="display:grid;grid-template-columns:90px 1fr;gap:8px 16px;align-items:baseline">
+      <code class="mono caption">2xl 28/500</code><span style="font-size:28px;font-weight:500;letter-spacing:-.02em" class="num">449,598</span>
+      <code class="mono caption">xl 20/600</code><span class="h1">National overview</span>
+      <code class="mono caption">md 13/600</code><span class="h2">Card title</span>
+      <code class="mono caption">md 13/400</code><span>Body and table text, 1,234.56</span>
+      <code class="mono caption">sm 12/500</code><span style="font-size:12px;font-weight:500;color:var(--text-2)">KPI label, control text</span>
+      <code class="mono caption">xs 11/400</code><span class="caption">Axis ticks, captions, field labels</span>
+    </div>
+    <div class="row caption"><span>Spacing 4 · 8 · 12 · 16 · 20 · 24 · 32</span><span>Radius 4 controls · 6 tooltip · 8 cards</span></div></section>
+
+  <section class="sec"><div class="sec-t"><span>Tabs · segmented · controls</span></div>
+    <div class="row" style="border-bottom:1px solid var(--border);height:40px;align-items:stretch">
+      <div class="tabs"><button class="tab" aria-selected="true">Overview</button><button class="tab">Detail</button><button class="tab">Methodology</button></div></div>
+    <div class="row">
+      <div class="seg"><button aria-pressed="true">Geographic</button><button>Hex tiles</button></div>
+      <div class="seg"><button>1M</button><button aria-pressed="true">1Y</button><button>5Y</button><button>Max</button></div>
+      <button class="btn btn-primary">Primary</button><button class="btn">Secondary</button><button class="btn btn-ghost">Ghost</button><button class="btn" disabled>Disabled</button>
+    </div></section>
+
+  <section class="sec"><div class="sec-t"><span>Filter bar</span></div>
+    <div class="filter-bar">
+      <div class="field"><label>Month</label><div class="stepper"><button class="btn btn-icon">‹</button><select class="select"><option>Jul 2026</option></select><button class="btn btn-icon" disabled>›</button></div></div>
+      <div class="field"><label>Region</label><select class="select" style="min-width:150px"><option>All regions</option></select></div>
+      <div class="field"><label>Search</label><input class="input" placeholder="Area or code" style="width:150px"></div>
+      <div class="spacer"></div>
+      <span class="chip"><span class="dot"></span>Data current</span>
+    </div></section>
+
+  <section class="sec"><div class="sec-t"><span>KPI card · delta badge · sparkline</span></div>
+    <div class="kpi-row" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="card kpi"><div class="kpi-label">Recorded crimes</div><div class="kpi-value">449,598</div><div class="kpi-spark" data-spark="a"></div>
+        <div class="kpi-meta">${delta(0.034)}<span>vs Jun</span></div></div>
+      <div class="card kpi"><div class="kpi-label">Median price</div><div class="kpi-value">£287k</div><div class="kpi-spark" data-spark="b"></div>
+        <div class="kpi-meta">${delta(0.021, { polarity: 'up-good' })}<span>YoY</span></div></div>
+      <div class="card kpi"><div class="kpi-label">Rank</div><div class="kpi-value">3rd<small>of 42</small></div><div></div>
+        <div class="kpi-meta"><span>Top quartile</span></div></div>
+    </div>
+    <div class="row">${delta(0.052)}${delta(-0.031)}${delta(0.018, { polarity: 'up-good' })}${delta(-0.044, { polarity: 'up-good' })}${delta(0)}${delta(0.12, { polarity: 'neutral' })}</div></section>
+
+  <section class="sec"><div class="sec-t"><span>Chart card · bar with reference</span></div>
+    <div class="card"><div class="card-h"><div class="titles"><div class="card-t">Category breakdown</div><div class="card-s">Per 1,000 residents</div></div>
+      <div class="seg"><button aria-pressed="true">Chart</button><button>Table</button></div></div>
+      <div class="card-b" data-bar></div></div></section>
+
+  <section class="sec"><div class="sec-t"><span>Chart card · line · categorical series</span></div>
+    <div class="card"><div class="card-h"><div class="titles"><div class="card-t">Trend</div><div class="card-s">Index, Jan = 100</div></div></div>
+      <div class="card-b"><div data-line></div>
+      <div class="legend-row caption" style="margin-top:8px">${['Series A','Series B','Series C','Series D'].map((s,i)=>`<span class="legend-item"><span class="sw-line" style="background:var(--cat-${i+1})"></span>${s}</span>`).join('')}<span class="legend-item"><span class="sw-dash"></span>Benchmark</span></div></div></div></section>
+
+  <section class="sec"><div class="sec-t"><span>Dot plot · rank vs average</span></div>
+    <div class="card"><div class="card-b" style="padding-top:12px"><div data-dot></div></div></div></section>
+
+  <section class="sec"><div class="sec-t"><span>Legend · tooltip</span></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px"><div data-legend></div>
+        <div class="legend-row caption">${[1,2,3].map(i=>`<span class="legend-item"><span class="sw" style="background:var(--cat-${i})"></span>Category ${i}</span>`).join('')}</div></div>
+      <div class="tooltip static"><div class="tt-title">West Yorkshire</div>
+        <div class="tt-row"><span>Per 1,000 residents</span><b>10.72</b></div><div class="tt-row"><span>Recorded crimes</span><b>25,184</b></div><div class="tt-row"><span>vs national average</span><b>+36%</b></div>
+        <div class="tt-hint">Click to open force detail</div></div>
+    </div></section>
+
+  <section class="sec"><div class="sec-t"><span>Data table</span></div>
+    <div class="card"><table class="table"><thead><tr><th>Area</th><th class="r">Value</th><th>Share</th><th class="r">Change</th></tr></thead><tbody>
+      ${[['Cleveland',11.84,.34,.041],['West Yorkshire',10.72,.31,-.012],['West Midlands',10.21,.29,.023],['Surrey',4.96,.14,-.035]].map((r,i)=>`<tr class="${i===1?'sel':''}"><td>${r[0]}</td><td class="r">${fmt.dec2(r[1])}</td><td><div class="bar-cell"><i style="width:${r[2]*200}px"></i><span class="caption">${Math.round(r[2]*100)}%</span></div></td><td class="r">${delta(r[3])}</td></tr>`).join('')}
+    </tbody></table></div></section>
+
+  <section class="sec"><div class="sec-t"><span>States · loading · empty · no data</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+      <div class="card kpi"><div class="skeleton" style="height:12px;width:60%"></div><div class="skeleton" style="height:28px;width:80%;grid-column:1/-1;margin-top:6px"></div><div class="skeleton" style="height:10px;width:40%;grid-column:1/-1;margin-top:6px"></div></div>
+      <div class="empty" style="min-height:0"><div class="empty-t">No results</div><div class="empty-s">Try a wider date range or clear filters.</div><button class="btn" style="margin-top:4px">Clear filters</button></div>
+      <div class="empty" style="min-height:0"><span class="nodata-fill"></span><div class="empty-t">No data for Jul 2026</div><div class="empty-s">Source has not published this period.</div></div>
+    </div></section>`;
+}
+
+const idx = [100, 102, 101, 104, 107, 106, 109, 108, 112, 111, 114, 117];
+['dark', 'light'].forEach(t => {
+  const c = document.getElementById('c-' + t);
+  c.innerHTML = showcase(t);
+  sparkline(c.querySelector('[data-spark="a"]'), [7.9,7.7,7.8,7.5,7.1,7.2,6.8,7.6,7.5,8.0,8.1,8.3], { color: 'var(--cat-1)' });
+  sparkline(c.querySelector('[data-spark="b"]'), [270,271,273,272,275,277,279,280,283,284,286,287], { color: 'var(--cat-3)' });
+  barChart(c.querySelector('[data-bar]'), [
+    { label: 'Violence and sexual offences', value: 3.9, ref: 2.9 }, { label: 'Public order', value: 1.1, ref: .72 },
+    { label: 'Criminal damage and arson', value: .98, ref: .71 }, { label: 'Shoplifting', value: .86, ref: .74 }, { label: 'Vehicle crime', value: .77, ref: .55 }],
+    { format: fmt.dec2, refLabel: ['Selected area', 'Average'], labelWidth: 180, valueWidth: 40 });
+  const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  lineChart(c.querySelector('[data-line]'), [
+    { name: 'Benchmark', values: idx.map(v => (v + 100) / 2 + 1), color: 'var(--text-3)', dashed: true },
+    { name: 'Series A', values: idx, color: 'var(--cat-1)' },
+    { name: 'Series B', values: idx.map((v, i) => 100 + (v - 100) * .5 + Math.sin(i) * 2), color: 'var(--cat-2)' },
+    { name: 'Series C', values: idx.map((v, i) => i === 7 ? null : 98 + i * .6), color: 'var(--cat-3)' },
+    { name: 'Series D', values: idx.map((v, i) => 103 - i * .4 + Math.cos(i) * 1.5), color: 'var(--cat-4)' }],
+    { labels, format: v => fmt.int(v), height: 200 });
+  dotPlot(c.querySelector('[data-dot]'), Array.from({ length: 30 }, (_, i) => ({ label: 'Area ' + (i + 1), value: 5 + ((i * 37) % 60) / 10, highlight: i === 11, short: 'Area 12' })),
+    { ref: 7.8, refLabel: 'Average', max: 11.5, height: 96 });
+  legendSeq(c.querySelector('[data-legend]'), [5.5, 6.5, 7.5, 8.5, 9.5, 10.5], { unit: 'Rate per 1,000' });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UK Crime Atlas</title>
+<link rel="stylesheet" href="ds/atlas-ds.css">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<script src="ds/atlas-ds.js"></script>
+<script src="data/crime-data.js"></script>
+<style>
+  html, body { margin: 0; min-height: 100%; }
+  .page { max-width: 1480px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .page-h { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 4px 0 4px; }
+  .crumb { font-size: var(--fs-sm); color: var(--text-3); display: flex; gap: 6px; margin-bottom: 4px; }
+  .map-wrap { position: relative; height: 600px; }
+  .map-wrap svg { width: 100%; height: 100%; display: block; }
+  .area { cursor: pointer; stroke: var(--surface); stroke-width: .6; transition: opacity .12s; }
+  .area.hl { stroke: var(--text); stroke-width: 1.6; }
+  .hex-code { fill: var(--on-seq, #111); font: 600 10px var(--font); pointer-events: none; }
+  @media (max-width: 1100px) { .span-7, .span-5 { grid-column: 1 / -1 !important; } }
+</style>
+</head>
+<body data-theme="dark">
+<header class="app-bar">
+  <div class="brand"><span class="brand-mark"></span>UK Crime Atlas</div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-nav="overview">National overview</button>
+    <button class="tab" role="tab" data-nav="force">Force detail</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="caption">Source: data.police.uk · excl. anti-social behaviour</span>
+  <div class="seg" id="theme-seg" aria-label="Theme">
+    <button data-theme-set="light">Light</button>
+    <button data-theme-set="dark">Dark</button>
+  </div>
+</header>
+<main id="view"></main>
+
+<script>
+const { fmt, delta, seqColor, hatchDefs, legendSeq, tooltip, ttRows, sparkline, barChart, lineChart, dotPlot } = AtlasDS;
+const C = window.CRIME;
+const LS = 'uk-crime-atlas-state';
+const S = Object.assign({ month: C.months.length - 1, mapMode: 'geo', theme: 'dark', force: 'west-yorkshire', catView: 'chart' }, JSON.parse(localStorage.getItem(LS) || '{}'));
+const save = () => localStorage.setItem(LS, JSON.stringify(S));
+const view = document.getElementById('view');
+const byId = Object.fromEntries(C.forces.map(f => [f.id, f]));
+let topo = null, features = null;
+
+// ---------- shared bits ----------
+function applyTheme() {
+  document.body.dataset.theme = S.theme;
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', b.dataset.themeSet === S.theme));
+}
+document.getElementById('theme-seg').addEventListener('click', e => { const t = e.target.dataset.themeSet; if (t) { S.theme = t; save(); applyTheme(); } });
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => go(b.dataset.nav === 'overview' ? '#/overview' : '#/force/' + S.force)));
+const go = h => { location.hash = h; };
+
+const monthStepper = () => `
+  <div class="field"><label for="month">Month</label>
+    <div class="stepper">
+      <button class="btn btn-icon" data-step="-1" aria-label="Previous month" ${S.month === 0 ? 'disabled' : ''}>‹</button>
+      <select class="select" id="month">${C.months.map((m, i) => `<option value="${i}" ${i === S.month ? 'selected' : ''}>${C.monthLabel(m)}</option>`).join('')}</select>
+      <button class="btn btn-icon" data-step="1" aria-label="Next month" ${S.month === C.months.length - 1 ? 'disabled' : ''}>›</button>
+    </div></div>`;
+function bindMonth(rerender) {
+  view.querySelector('#month').addEventListener('change', e => { S.month = +e.target.value; save(); rerender(); });
+  view.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => { S.month = Math.max(0, Math.min(C.months.length - 1, S.month + +b.dataset.step)); save(); rerender(); }));
+}
+const forceSelect = (id, label, selected, placeholder) => `
+  <div class="field"><label for="${id}">${label}</label>
+    <select class="select" id="${id}" style="min-width:200px">${placeholder ? `<option value="">${placeholder}</option>` : ''}${C.forces.map(f => `<option value="${f.id}" ${f.id === selected ? 'selected' : ''}>${f.name}</option>`).join('')}</select></div>`;
+const reportingChip = n => `<span class="chip"><span class="dot" style="background:${n.missing.length ? 'var(--cat-5)' : 'var(--pos)'}"></span>${n.reporting} of ${C.forces.length} forces reporting</span>`;
+const series = fn => C.months.map((_, i) => fn(i));
+const nat = C.months.map((_, i) => C.nationalMonth(i));
+
+// ---------- overview ----------
+function renderOverview() {
+  const n = nat[S.month], p = S.month > 0 ? nat[S.month - 1] : null;
+  const mLabel = C.monthLabel(C.months[S.month]);
+  const top = n.ranked.find(r => r.force.id !== 'city-of-london');
+  // like-for-like MoM: only forces reporting both months
+  const both = p ? n.ok.filter(r => !p.rows.find(q => q.force.id === r.force.id).missing) : [];
+  const sumT = (rows, mo) => rows.reduce((a, r) => a + (mo ? mo.rows.find(q => q.force.id === r.force.id).total : r.total), 0);
+  const mom = p ? sumT(both) / sumT(both, p) - 1 : 0;
+  const rateMom = p ? n.rate / p.rate - 1 : 0;
+  const missingNames = n.missing.map(f => f.name).join(', ');
+
+  view.innerHTML = `<div class="page">
+    <div class="page-h">
+      <div style="flex:1;min-width:280px"><h1 class="h1">National overview</h1>
+        <div class="muted" style="margin-top:4px">Police recorded crime across the 43 territorial forces of England and Wales.</div></div>
+    </div>
+    <div class="filter-bar">
+      ${monthStepper()}
+      <div class="field"><span class="field-label">Map view</span>
+        <div class="seg" id="map-seg"><button data-mode="geo" aria-pressed="${S.mapMode === 'geo'}">Geographic</button><button data-mode="hex" aria-pressed="${S.mapMode === 'hex'}">Hex tiles</button></div></div>
+      ${forceSelect('goto', 'Go to force', null, 'Select a force…')}
+      <div class="spacer"></div>
+      ${reportingChip(n)}
+    </div>
+    <div class="kpi-row">
+      <div class="card kpi">
+        <div class="kpi-label">Recorded crimes</div>
+        <div class="kpi-value">${fmt.int(n.total)}</div>
+        <div class="kpi-spark" id="sp-total"></div>
+        <div class="kpi-meta">${p ? delta(mom) + '<span>vs ' + C.monthLabel(C.months[S.month - 1]) + ', like-for-like</span>' : '<span>First month in range</span>'}</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-label">Crimes per 1,000 residents</div>
+        <div class="kpi-value">${fmt.dec2(n.rate)}</div>
+        <div class="kpi-spark" id="sp-rate"></div>
+        <div class="kpi-meta">${p ? delta(rateMom) + '<span>vs previous month</span>' : ''}</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-label">Highest rate <span class="subtle" style="font-weight:400">· excl. City of London</span></div>
+        <div class="kpi-value" style="font-size:var(--fs-xl);padding:4px 0 3px"><a href="#/force/${top.force.id}" style="color:var(--text)">${top.force.name}</a></div>
+        <div></div>
+        <div class="kpi-meta"><span class="num" style="color:var(--text);font-weight:500">${fmt.dec2(top.rate)}</span><span>per 1,000</span>${delta(top.rate / n.rate - 1, { text: fmt.pct(top.rate / n.rate - 1, 0) + ' vs avg' })}</div>
+      </div>
+    </div>
+    <div class="grid-12">
+      <section class="card span-7" style="grid-column:span 7">
+        <div class="card-h"><div class="titles"><div class="card-t">Crimes per 1,000 residents by police force area</div><div class="card-s">${mLabel} · hover for detail, click to open a force</div></div></div>
+        <div class="card-b"><div class="map-wrap" id="map"><div class="skeleton" style="position:absolute;inset:0"></div></div>
+          <div id="legend" style="margin-top:12px;max-width:520px"></div></div>
+        ${n.missing.length ? `<div class="card-f"><span class="legend-item"><span class="sw nodata-fill"></span>${missingNames}: no data published for ${mLabel}. National figures exclude this force.</span></div>` : ''}
+      </section>
+      <section class="card span-5" style="grid-column:span 5">
+        <div class="card-h"><div class="titles"><div class="card-t">Top crime categories</div><div class="card-s">England and Wales · ${mLabel} · recorded crimes</div></div></div>
+        <div class="card-b" id="cats"></div>
+        <div class="card-f" id="cats-f"></div>
+      </section>
+    </div>
+  </div>`;
+
+  bindMonth(renderOverview);
+  view.querySelector('#map-seg').addEventListener('click', e => { const m = e.target.dataset.mode; if (m) { S.mapMode = m; save(); renderOverview(); } });
+  view.querySelector('#goto').addEventListener('change', e => e.target.value && go('#/force/' + e.target.value));
+
+  sparkline(view.querySelector('#sp-total'), nat.map(x => x.total), { color: 'var(--cat-1)' });
+  sparkline(view.querySelector('#sp-rate'), nat.map(x => x.rate), { color: 'var(--cat-1)' });
+  legendSeq(view.querySelector('#legend'), C.thresholds, { unit: 'Crimes per 1,000 residents, month' });
+
+  const cats = n.cats.slice().sort((a, b) => b.count - a.count);
+  const topCats = cats.slice(0, 8);
+  const prevCats = p && Object.fromEntries(p.cats.map(c => [c.id, c.count]));
+  barChart(view.querySelector('#cats'), topCats.map(c => ({ label: c.name, value: c.count, id: c.id })), {
+    format: fmt.compact, labelWidth: 170, valueWidth: 48,
+    onHover: (r, e) => r ? tooltip.show(`<div class="tt-title">${r.label}</div>${ttRows([
+      ['Crimes', fmt.int(r.value)], ['Share of all crime', (r.value / n.total * 100).toFixed(1) + '%'],
+      ['Per 1,000 residents', fmt.dec2(r.value / n.pop * 1000)],
+      ...(prevCats ? [['vs previous month', fmt.pct(r.value / prevCats[r.id] - 1)]] : [])])}`, e) : tooltip.hide(),
+  });
+  const rest = cats.slice(8);
+  view.querySelector('#cats-f').textContent = `${rest.length} further categories: ${fmt.int(rest.reduce((a, c) => a + c.count, 0))} crimes (${rest.map(c => c.name).join(', ')})`;
+
+  drawMap(n);
+}
+
+async function loadTopo() {
+  if (features) return;
+  topo = topo || await (await fetch('data/lad2021-ew.topo.json')).json();
+  const geoms = topo.objects.geog.geometries;
+  const lookup = {}; C.forces.forEach(f => f.lads.forEach(c => lookup[c] = f.id));
+  features = C.forces.map(f => ({ type: 'Feature', id: f.id, geometry: topojson.merge(topo, geoms.filter(g => lookup[g.properties.AREACD] === f.id)) }));
+}
+
+async function drawMap(n) {
+  const el = view.querySelector('#map');
+  if (S.mapMode === 'geo') await loadTopo();
+  if (!el.isConnected) return;
+  const rows = Object.fromEntries(n.rows.map(r => [r.force.id, r]));
+  const rank = Object.fromEntries(n.ranked.map((r, i) => [r.force.id, i + 1]));
+  const W = el.clientWidth, H = el.clientHeight;
+  const svg = d3.select(el).html('').append('svg').attr('viewBox', `0 0 ${W} ${H}`);
+  hatchDefs(svg);
+  const tip = (id, e) => {
+    const r = rows[id];
+    tooltip.show(`<div class="tt-title">${r.force.name}</div>` + (r.missing
+      ? `<div class="tt-row"><span>No data published for ${C.monthLabel(C.months[S.month])}</span></div>`
+      : ttRows([['Per 1,000 residents', fmt.dec2(r.rate)], ['Recorded crimes', fmt.int(r.total)], ['Rank (highest first)', `${rank[id]} of ${n.reporting}`], ['vs national average', fmt.pct(r.rate / n.rate - 1, 0)]]))
+      + `<div class="tt-hint">Click to open force detail</div>`, e);
+  };
+  const bind = sel => sel.attr('class', 'area')
+    .on('mousemove', function (e, d) { d3.select(this).classed('hl', true).raise(); tip(d.id, e); })
+    .on('mouseleave', function () { d3.select(this).classed('hl', false); tooltip.hide(); })
+    .on('click', (e, d) => { tooltip.hide(); S.force = d.id; save(); go('#/force/' + d.id); });
+  const fill = id => rows[id].missing ? 'url(#nodata-hatch)' : seqColor(rows[id].rate, C.thresholds);
+
+  if (S.mapMode === 'geo') {
+    const fc = { type: 'FeatureCollection', features };
+    const proj = d3.geoTransverseMercator().rotate([2, 0]).fitExtent([[10, 10], [W * 0.78, H - 10]], fc);
+    const path = d3.geoPath(proj);
+    bind(svg.append('g').selectAll('path').data(features).join('path').attr('d', path).style('fill', d => fill(d.id)));
+    // London inset
+    const ld = features.filter(f => f.id === 'metropolitan' || f.id === 'city-of-london');
+    const box = { x: W * 0.74, y: H * 0.56, w: Math.min(190, W * 0.24), h: Math.min(150, H * 0.26) };
+    const ip = d3.geoTransverseMercator().rotate([2, 0]).fitExtent([[box.x + 8, box.y + 22], [box.x + box.w - 8, box.y + box.h - 8]], { type: 'FeatureCollection', features: ld });
+    const ig = svg.append('g');
+    ig.append('rect').attr('x', box.x).attr('y', box.y).attr('width', box.w).attr('height', box.h).attr('rx', 6).style('fill', 'var(--surface-2)').style('stroke', 'var(--border)');
+    ig.append('text').attr('x', box.x + 10).attr('y', box.y + 15).style('fill', 'var(--text-3)').style('font', '500 11px var(--font)').text('London');
+    bind(ig.selectAll('path').data(ld).join('path').attr('d', d3.geoPath(ip)).style('fill', d => fill(d.id)));
+    const lp = path(features.find(f => f.id === 'metropolitan'));
+    const c = path.centroid(features.find(f => f.id === 'metropolitan'));
+    svg.insert('line', 'g').attr('x1', c[0] + 8).attr('y1', c[1]).attr('x2', box.x).attr('y2', box.y + box.h / 2).style('stroke', 'var(--border-strong)').attr('stroke-dasharray', '2 2');
+  } else {
+    const cols = 9, rowsN = 9;
+    const r = Math.min((W * 0.92) / (cols * Math.sqrt(3)), (H - 20) / (rowsN * 1.5 + 0.5));
+    const hw = Math.sqrt(3) * r;
+    const ox = (W - cols * hw) / 2, oy = (H - (rowsN * 1.5 + 0.5) * r) / 2 + r;
+    const hex = d3.range(6).map(i => { const a = Math.PI / 180 * (60 * i - 90); return [Math.cos(a) * (r - 1.5), Math.sin(a) * (r - 1.5)]; });
+    const g = svg.append('g').selectAll('g').data(C.forces.map(f => ({ id: f.id, f }))).join('g')
+      .attr('transform', d => `translate(${ox + d.f.hex[0] * hw + (d.f.hex[1] % 2 ? hw / 2 : 0)},${oy + d.f.hex[1] * r * 1.5})`);
+    bind(g.append('path').attr('d', 'M' + hex.join('L') + 'Z').style('fill', d => fill(d.id)).attr('stroke-width', 0));
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.1em').style('pointer-events', 'none')
+      .style('font', `600 ${Math.max(9, r * 0.32)}px var(--font)`)
+      .style('fill', d => { const x = rows[d.id]; if (x.missing) return 'var(--text-2)'; const i = AtlasDS.seqIndex(x.rate, C.thresholds); return (S.theme === 'dark' ? i >= 5 : i <= 3) ? 'oklch(0.2 0.01 260)' : 'oklch(0.97 0.005 260)'; })
+      .text(d => d.f.short);
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '1.2em').style('pointer-events', 'none')
+      .style('font', `400 ${Math.max(9, r * 0.26)}px var(--font)`).style('font-variant-numeric', 'tabular-nums')
+      .style('fill', d => { const x = rows[d.id]; if (x.missing) return 'var(--text-2)'; const i = AtlasDS.seqIndex(x.rate, C.thresholds); return (S.theme === 'dark' ? i >= 5 : i <= 3) ? 'oklch(0.2 0.01 260 / .8)' : 'oklch(0.97 0.005 260 / .85)'; })
+      .text(d => rows[d.id].missing ? 'n/a' : fmt.dec1(rows[d.id].rate));
+  }
+}
+
+// ---------- force detail ----------
+function renderForce() {
+  const f = byId[S.force] || byId['west-yorkshire'];
+  const n = nat[S.month];
+  const d = C.forceMonth(f.id, S.month);
+  const pv = S.month > 0 ? C.forceMonth(f.id, S.month - 1) : null;
+  const mLabel = C.monthLabel(C.months[S.month]);
+  const rank = d.missing ? null : n.ranked.findIndex(r => r.force.id === f.id) + 1;
+  const vsAvg = d.missing ? null : d.rate / n.rate - 1;
+  const trend = series(i => C.forceMonth(f.id, i));
+  const lastOk = [...trend].reverse().find(t => !t.missing);
+
+  view.innerHTML = `<div class="page">
+    <div class="page-h"><div style="flex:1;min-width:280px">
+      <div class="crumb"><a href="#/overview">National overview</a><span>/</span><span>Force detail</span></div>
+      <h1 class="h1">${f.name} Police</h1>
+      <div class="muted" style="margin-top:4px">Resident population ${fmt.int(f.pop)}${f.id === 'city-of-london' ? ' · rates are inflated by the small resident population relative to daytime visitors' : ''}</div></div>
+    </div>
+    <div class="filter-bar">
+      ${forceSelect('force', 'Police force', f.id)}
+      ${monthStepper()}
+      <div class="spacer"></div>
+      ${reportingChip(n)}
+    </div>
+    <div class="kpi-row">
+      <div class="card kpi">
+        <div class="kpi-label">Crimes per 1,000 residents</div>
+        <div class="kpi-value">${d.missing ? '—' : fmt.dec2(d.rate)}</div>
+        <div class="kpi-spark" id="sp-f"></div>
+        <div class="kpi-meta">${d.missing ? '<span>No data published for ' + mLabel + '</span>' : pv && !pv.missing ? delta(d.rate / pv.rate - 1) + '<span>vs previous month · ' + fmt.int(d.total) + ' crimes</span>' : '<span>' + fmt.int(d.total) + ' crimes</span>'}</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-label">Rank, highest rate first</div>
+        <div class="kpi-value">${d.missing ? '—' : fmt.ordinal(rank)}<small>of ${n.reporting}</small></div>
+        <div></div>
+        <div class="kpi-meta">${d.missing ? '<span>Not ranked this month</span>' : `<span>${rank <= Math.ceil(n.reporting / 4) ? 'Top quartile' : rank > n.reporting * 0.75 ? 'Bottom quartile' : 'Middle half'} of reporting forces</span>`}</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-label">vs national average</div>
+        <div class="kpi-value">${d.missing ? '—' : fmt.pct(vsAvg, 0)}</div>
+        <div></div>
+        <div class="kpi-meta">${d.missing ? '' : delta(vsAvg, { text: vsAvg > 0 ? 'Above' : 'Below' }) + `<span>${fmt.dec2(d.rate)} vs ${fmt.dec2(n.rate)} per 1,000</span>`}</div>
+      </div>
+    </div>
+    <div class="grid-12">
+      <section class="card span-7" style="grid-column:span 7">
+        <div class="card-h"><div class="titles"><div class="card-t">Category breakdown</div><div class="card-s">${mLabel} · crimes per 1,000 residents</div></div>
+          <div class="seg" id="cat-seg"><button data-v="chart" aria-pressed="${S.catView === 'chart'}">Chart</button><button data-v="table" aria-pressed="${S.catView === 'table'}">Table</button></div></div>
+        <div class="card-b" id="fcats"></div>
+      </section>
+      <section class="card span-5" style="grid-column:span 5">
+        <div class="card-h"><div class="titles"><div class="card-t">12-month trend</div><div class="card-s">Crimes per 1,000 residents · ${C.monthLabel(C.months[0])} – ${C.monthLabel(C.months[C.months.length - 1])}</div></div></div>
+        <div class="card-b"><div id="trend"></div>
+          <div class="legend-row caption" style="margin-top:8px"><span class="legend-item"><span class="sw-line" style="background:var(--cat-1)"></span>${f.name}</span><span class="legend-item"><span class="sw-dash"></span>England and Wales</span>${trend.some(t => t.missing) ? '<span class="legend-item"><span class="sw nodata-fill"></span>No data</span>' : ''}</div></div>
+      </section>
+      <section class="card" style="grid-column:1 / -1">
+        <div class="card-h"><div class="titles"><div class="card-t">Rank against other forces</div><div class="card-s">${mLabel} · each dot is one police force · click a dot to switch force</div></div></div>
+        <div class="card-b">${d.missing ? '' : '<div id="rank"></div>'}</div>
+      </section>
+    </div>
+  </div>`;
+
+  bindMonth(renderForce);
+  view.querySelector('#force').addEventListener('change', e => { S.force = e.target.value; save(); go('#/force/' + S.force); });
+  view.querySelector('#cat-seg').addEventListener('click', e => { const v = e.target.dataset.v; if (v) { S.catView = v; save(); renderForce(); } });
+
+  sparkline(view.querySelector('#sp-f'), trend.map(t => t.missing ? null : t.rate), { color: 'var(--cat-1)' });
+
+  const empty = (t, s) => `<div class="empty"><span class="nodata-fill"></span><div class="empty-t">${t}</div><div class="empty-s">${s}</div></div>`;
+  const cEl = view.querySelector('#fcats');
+  if (d.missing) {
+    cEl.innerHTML = empty(`No data for ${mLabel}`, `${f.name} has not published crime data for this month yet.${lastOk ? ` Latest available: ${C.monthLabel(C.months[C.months.indexOf(C.months.find((m, i) => trend[i] === lastOk))])}.` : ''}`);
+    view.querySelector('#rank').parentElement.innerHTML = empty('Not ranked this month', 'Forces without published data are excluded from the national ranking.');
+  } else {
+    const natRate = Object.fromEntries(n.cats.map(c => [c.id, c.count / n.pop * 1000]));
+    const prev = pv && !pv.missing ? Object.fromEntries(pv.cats.map(c => [c.id, c.count])) : null;
+    const rows = d.cats.slice().sort((a, b) => b.count - a.count).map(c => ({ label: c.name, id: c.id, value: c.count / f.pop * 1000, ref: natRate[c.id], count: c.count }));
+    if (S.catView === 'chart') {
+      barChart(cEl, rows, { format: fmt.dec2, labelWidth: 180, valueWidth: 48, refLabel: [f.name, 'England and Wales'],
+        onHover: (r, e) => r ? tooltip.show(`<div class="tt-title">${r.label}</div>${ttRows([['Crimes', fmt.int(r.count)], ['Per 1,000', fmt.dec2(r.value)], ['National per 1,000', fmt.dec2(r.ref)], ['vs national', fmt.pct(r.value / r.ref - 1, 0)]])}`, e) : tooltip.hide() });
+    } else {
+      cEl.innerHTML = `<table class="table"><thead><tr><th>Category</th><th class="r">Crimes</th><th class="r">Per 1,000</th><th class="r">National</th><th class="r">vs national</th><th class="r">vs prev. month</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td>${r.label}</td><td class="r">${fmt.int(r.count)}</td><td class="r">${fmt.dec2(r.value)}</td><td class="r muted">${fmt.dec2(r.ref)}</td>
+        <td class="r">${delta(r.value / r.ref - 1, { text: fmt.pct(r.value / r.ref - 1, 0) })}</td>
+        <td class="r">${prev ? delta(r.count / prev[r.id] - 1) : '<span class="subtle">—</span>'}</td></tr>`).join('')}</tbody></table>`;
+    }
+    const items = n.ok.map(r => ({ label: r.force.name, short: r.force.name, value: r.rate, highlight: r.force.id === f.id, id: r.force.id,
+      extra: [['Rank', `${n.ranked.indexOf(r) + 1} of ${n.reporting}`]] }));
+    dotPlot(view.querySelector('#rank'), items, { ref: n.rate, max: 14, format: fmt.dec1, height: 110,
+      onClick: x => { tooltip.hide(); S.force = x.id; save(); go('#/force/' + x.id); } });
+  }
+  const labels = C.months.map(C.monthShort); labels.full = C.months.map(C.monthLabel);
+  lineChart(view.querySelector('#trend'), [
+    { name: 'England and Wales', values: nat.map(x => x.rate), color: 'var(--text-3)', dashed: true },
+    { name: f.name, values: trend.map(t => t.missing ? null : t.rate), color: 'var(--cat-1)' },
+  ], { labels, format: fmt.dec1, height: 250, highlight: S.month });
+}
+
+// ---------- router ----------
+function route() {
+  tooltip.hide();
+  const m = location.hash.match(/^#\/force\/([\w-]+)/);
+  if (m && byId[m[1]]) { S.force = m[1]; save(); }
+  const isForce = !!m;
+  document.querySelectorAll('[data-nav]').forEach(b => b.setAttribute('aria-selected', (b.dataset.nav === 'force') === isForce));
+  document.title = isForce ? `${byId[S.force].name} · UK Crime Atlas` : 'UK Crime Atlas';
+  window.scrollTo(0, 0);
+  isForce ? renderForce() : renderOverview();
+}
+applyTheme();
+addEventListener('hashchange', route);
+let rw; addEventListener('resize', () => { clearTimeout(rw); rw = setTimeout(() => !location.hash.startsWith('#/force') && drawMap(nat[S.month]), 150); });
+route();
+</script>
+</body>
+</html>
