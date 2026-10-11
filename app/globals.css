@@ -252,6 +252,19 @@ main { flex: 1; }
 .table .r { text-align: right; }
 .table tbody tr:hover > * { background: var(--surface-2); }
 
+/* Methodology */
+.method { display: flex; flex-direction: column; gap: var(--s-3); max-width: 760px; }
+.prose { color: var(--text-2); line-height: 1.6; }
+.prose > * { margin: 0 0 var(--s-3); }
+.prose > :last-child { margin-bottom: 0; }
+.prose p, .prose ul { text-wrap: pretty; }
+.prose ul { padding-left: var(--s-5); }
+.prose li + li { margin-top: var(--s-1); }
+.prose b { color: var(--text); font-weight: 500; }
+.prose .formula { font-family: var(--mono); font-size: var(--fs-sm); color: var(--text); padding: var(--s-2) var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.prose .bands { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); font-size: var(--fs-sm); }
+.prose .bands li { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+
 .trend { font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
 .trend svg:focus, .trend .recharts-surface:focus { outline: none; }
 .trend .recharts-cartesian-grid line { stroke: var(--grid); }

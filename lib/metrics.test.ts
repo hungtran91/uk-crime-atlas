@@ -9,7 +9,9 @@ import {
   forceRateSeries,
   forceStanding,
   highestRate,
+  lowMonths,
   monthOverMonth,
+  monthOverMonthPerDay,
   national,
   nationalRateSeries,
   nationalWithout,
@@ -41,7 +43,7 @@ const row = (forceId: string, month: string, category: string, count: number): C
   category,
   count,
 });
-const ds = createDataset(meta, forces, [
+const rows = [
   row("a", "2026-01", "Burglary", 4),
   row("a", "2026-01", "Drugs", 6),
   row("b", "2026-01", "Burglary", 10),
@@ -57,7 +59,8 @@ const ds = createDataset(meta, forces, [
   row("b", "2026-03", "Drugs", 4),
   row(CITY_OF_LONDON_ID, "2026-03", "Burglary", 2),
   row("z", "2026-03", "Burglary", 2),
-]);
+];
+const ds = createDataset(meta, forces, rows);
 
 describe("rate", () => {
   it("is count per 1,000 residents", () => {
@@ -253,6 +256,39 @@ describe("nationalWithout", () => {
   it("recomputes the national rate without one force", () => {
     expect(nationalWithout(ds, "2026-01", "b")).toBeCloseTo((15 / 1100) * 1000, 12);
     expect(nationalWithout(ds, "2026-01", "z")).toBe(national(ds, "2026-01").rate);
+  });
+});
+
+describe("monthOverMonthPerDay", () => {
+  it("takes the month length out of the like-for-like change", () => {
+    // Forces in both months: a and City of London. 15 crimes over 31 days, then 16 over 28.
+    expect(monthOverMonth(ds, "2026-02")?.pct).toBeCloseTo(16 / 15 - 1, 12);
+    expect(monthOverMonthPerDay(ds, "2026-02")).toBeCloseTo(16 / 28 / (15 / 31) - 1, 12);
+  });
+
+  it("is null for the first month", () => {
+    expect(monthOverMonthPerDay(ds, "2026-01")).toBeNull();
+  });
+});
+
+describe("lowMonths", () => {
+  it("lists kept force-months by share of the force's median month, lowest first", () => {
+    // b: 10 and 20, median 15. City of London: 5, 4, 2, median 4. z: 3, 1, 2, median 2.
+    expect(lowMonths(ds, 0.6, 0.8)).toEqual([
+      { forceId: "b", month: "2026-01", total: 10, median: 15, share: 10 / 15 },
+    ]);
+    expect(lowMonths(ds, 0.5, 0.6).map((l) => [l.forceId, l.month])).toEqual([
+      [CITY_OF_LONDON_ID, "2026-03"],
+      ["z", "2026-02"],
+    ]);
+  });
+
+  it("counts an excluded incomplete month towards the median, but never lists it", () => {
+    const incomplete = { "2026-02": [{ forceId: "b", count: 2, medianCount: 10 }] };
+    const partial = createDataset({ ...meta, incomplete }, forces, rows);
+    // b: 10, 2 (excluded), 20, median 10, so January is no longer low.
+    expect(lowMonths(partial, 0.6, 0.8)).toEqual([]);
+    expect(lowMonths(partial, 0, 0.5)).toEqual([]);
   });
 });
 

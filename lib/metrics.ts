@@ -1,4 +1,5 @@
 import { forceMonthCounts, type Dataset } from "@/lib/data";
+import { daysInMonth } from "@/lib/month";
 
 export const CITY_OF_LONDON_ID = "city-of-london";
 
@@ -251,6 +252,53 @@ export function nationalWithout(ds: Dataset, month: string, forceId: string): nu
   if (!rows.length) return null;
   const total = rows.reduce((a, r) => a + r.total, 0);
   return rate(total, rows.reduce((a, r) => a + population(ds, r.forceId), 0));
+}
+
+/**
+ * Like-for-like change in crimes per day vs the previous month: the month-over-month change with
+ * the difference in month length taken out. Null for the first month.
+ */
+export function monthOverMonthPerDay(ds: Dataset, month: string): number | null {
+  const mom = monthOverMonth(ds, month);
+  if (!mom) return null;
+  return ratio(mom.current / daysInMonth(mom.month), mom.previous / daysInMonth(mom.prevMonth));
+}
+
+export interface LowMonth {
+  forceId: string;
+  month: string;
+  total: number;
+  /** The force's median monthly total over its published months (incomplete ones included). */
+  median: number;
+  /** total / median */
+  share: number;
+}
+
+function median(values: number[]): number {
+  const sorted = values.slice().sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/**
+ * Force-months that were kept but are low against the force's own median month:
+ * from ≤ share < to, lowest first. The median matches ingest.py's incomplete rule.
+ */
+export function lowMonths(ds: Dataset, from: number, to: number): LowMonth[] {
+  const out: LowMonth[] = [];
+  for (const f of ds.forces) {
+    const kept = ds.meta.months.flatMap((m) => forceMonth(ds, f.id, m) ?? []);
+    const excluded = Object.values(ds.meta.incomplete).flatMap((entries) =>
+      entries.filter((e) => e.forceId === f.id).map((e) => e.count),
+    );
+    if (!kept.length) continue;
+    const mid = median([...kept.map((k) => k.total), ...excluded]);
+    for (const k of kept) {
+      const share = k.total / mid;
+      if (share >= from && share < to) out.push({ forceId: f.id, month: k.month, total: k.total, median: mid, share });
+    }
+  }
+  return out.sort((a, b) => a.share - b.share || (a.forceId < b.forceId ? -1 : a.forceId > b.forceId ? 1 : 0));
 }
 
 export interface ForceStanding extends RankedForce {

@@ -24,6 +24,8 @@ export const fmt = {
   },
   /** Ratio change as a signed percentage: 0.065 → "+6.5%". */
   pct: (v: number, decimals = 1) => signed(v, Math.abs(v * 100).toFixed(decimals)) + "%",
+  /** Unsigned share: 0.247 → "25%". */
+  share: (v: number, decimals = 0) => (v * 100).toFixed(decimals) + "%",
   /** Signed absolute change: 0.472 → "+0.47". */
   change: (v: number, decimals = 2) => signed(v, Math.abs(v).toFixed(decimals)),
   ordinal: (n: number) => {

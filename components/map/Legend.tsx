@@ -3,7 +3,8 @@ import { RATE_BINS } from "@/lib/metrics";
 
 const first = RATE_BINS[0];
 const last = RATE_BINS[RATE_BINS.length - 1];
-const LABELS = [
+/** One label per colour band, lowest first. */
+export const BIN_LABELS = [
   `<${fmt.dec1(first)}`,
   ...RATE_BINS.slice(0, -1).map((t, i) => `${fmt.dec1(t)}–${fmt.dec1(RATE_BINS[i + 1])}`),
   `≥${fmt.dec1(last)}`,
@@ -20,12 +21,12 @@ export default function Legend() {
         </span>
       </div>
       <div className="legend-scale" aria-hidden="true">
-        {LABELS.map((label, i) => (
+        {BIN_LABELS.map((label, i) => (
           <span key={label} className={`seq-${i + 1}`} title={label} />
         ))}
       </div>
       <div className="legend-ticks">
-        {LABELS.map((label) => (
+        {BIN_LABELS.map((label) => (
           <span key={label}>{label}</span>
         ))}
       </div>

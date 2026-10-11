@@ -42,6 +42,13 @@ describe("fmt", () => {
   });
 });
 
+describe("fmt.share", () => {
+  it("formats an unsigned percentage", () => {
+    expect(fmt.share(0.2471)).toBe("25%");
+    expect(fmt.share(0.2471, 1)).toBe("24.7%");
+  });
+});
+
 describe("labels", () => {
   it("formats ranks", () => {
     expect(rankLabel(2, 40)).toBe("2nd of 40 reporting");

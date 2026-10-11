@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMonth, withMonth } from "@/lib/month";
+import { daysInMonth, monthRuns, parseMonth, withMonth } from "@/lib/month";
 
 const months = ["2026-05", "2026-06", "2026-07"];
 const latest = "2026-07";
@@ -13,6 +13,25 @@ describe("parseMonth", () => {
     for (const v of [null, undefined, "", "banana", "2026-5", "2024-01", "2026-08"]) {
       expect(parseMonth(v, months, latest)).toBe(latest);
     }
+  });
+});
+
+describe("daysInMonth", () => {
+  it("knows month lengths and leap years", () => {
+    expect(["2026-01", "2026-02", "2026-04", "2025-12", "2028-02"].map(daysInMonth)).toEqual([31, 28, 30, 31, 29]);
+  });
+});
+
+describe("monthRuns", () => {
+  const all = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+
+  it("joins consecutive months and splits at a gap", () => {
+    expect(monthRuns(["2026-01", "2026-02", "2026-04"], all)).toEqual([
+      ["2026-01", "2026-02"],
+      ["2026-04", "2026-04"],
+    ]);
+    expect(monthRuns(all, all)).toEqual([["2026-01", "2026-05"]]);
+    expect(monthRuns([], all)).toEqual([]);
   });
 });
 
