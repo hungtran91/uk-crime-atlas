@@ -30,7 +30,15 @@ describe("fmt", () => {
     expect(fmt.dec2(7.7)).toBe("7.70");
     expect(fmt.compact(1_234_567)).toBe("1.2M");
     expect(fmt.compact(161_499)).toBe("161k");
-    expect(fmt.compact(9_999)).toBe("9,999");
+  });
+
+  it("uses one compact format from 1,000 up", () => {
+    expect(fmt.compact(950)).toBe("950");
+    expect(fmt.compact(1_000)).toBe("1.0k");
+    expect(fmt.compact(8_215)).toBe("8.2k");
+    expect(fmt.compact(9_949)).toBe("9.9k");
+    expect(fmt.compact(9_960)).toBe("10k");
+    expect(fmt.compact(11_499)).toBe("11k");
   });
 });
 

@@ -15,7 +15,13 @@ export const fmt = {
   int: (v: number) => nf0.format(v),
   dec1: (v: number) => nf1.format(v),
   dec2: (v: number) => nf2.format(v),
-  compact: (v: number) => (v >= 1e6 ? nf1.format(v / 1e6) + "M" : v >= 1e4 ? nf0.format(v / 1e3) + "k" : nf0.format(v)),
+  /** 950 → "950", 8,215 → "8.2k", 11,499 → "11k", 1,234,567 → "1.2M". */
+  compact: (v: number) => {
+    if (v >= 1e6) return nf1.format(v / 1e6) + "M";
+    if (v < 1e3) return nf0.format(v);
+    // 9,950 and up would print as "10.0k": switch to whole thousands from there.
+    return (v < 9950 ? nf1.format(v / 1e3) : nf0.format(v / 1e3)) + "k";
+  },
   /** Ratio change as a signed percentage: 0.065 → "+6.5%". */
   pct: (v: number, decimals = 1) => signed(v, Math.abs(v * 100).toFixed(decimals)) + "%",
   /** Signed absolute change: 0.472 → "+0.47". */

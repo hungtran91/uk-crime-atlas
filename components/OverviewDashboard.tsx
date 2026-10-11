@@ -127,14 +127,14 @@ export default function OverviewDashboard({ model, geometry }: { model: Overview
         <section className="card span-5">
           <div className="card-h">
             <div className="titles">
-              <h2 className="card-t">Top crime categories</h2>
+              <h2 className="card-t">Crime categories</h2>
               <div className="card-s">
                 {data.reporting} reporting forces · {label} · recorded crimes
               </div>
             </div>
           </div>
           <div className="card-b">
-            <TopCategories categories={data.categories} label={`Top crime categories by recorded crimes, ${label}`} />
+            <TopCategories categories={data.categories} label={`Crime categories by recorded crimes, ${label}`} />
           </div>
         </section>
       </div>
