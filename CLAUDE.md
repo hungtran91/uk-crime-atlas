@@ -57,6 +57,7 @@ Never call bare `python` (two versions installed). Process CSVs file by file.
 - Light + dark via data-theme, dark default
 - Server components by default; "use client" only where interactive
 - No `any`; comment only non-obvious logic; one commit per completed step
+- Next.js 16 differs from older versions — check current docs before using any API you're unsure of.
 
 ## Definition of done (every phase)
 - All acceptance checks for the phase in docs/PLAN.md pass
