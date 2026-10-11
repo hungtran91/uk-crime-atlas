@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "d3-geo": "3.1.1",
-    "next": "16.3.6",
+    "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-is": "19.2.8",
@@ -30,8 +30,8 @@
     "@types/react-dom": "^19",
     "@types/topojson-client": "3.1.5",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
-    "mapshaper": "0.7.68",
+    "eslint-config-next": "16.3.8",
+    "mapshaper": "0.7.83",
     "typescript": "^5",
     "vitest": "^5.0.2"
   }
