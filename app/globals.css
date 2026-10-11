@@ -230,3 +230,14 @@ main { flex: 1; }
 .cat-chart svg:focus, .cat-chart .recharts-surface:focus, .spark svg:focus { outline: none; }
 .tooltip.static { position: relative; opacity: 1; }
 .cat-chart .cat-value { fill: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* Narrow screens: the app bar wraps its tabs onto a second row and the map keeps its aspect ratio. */
+@media (max-width: 760px) {
+  .app-bar { flex-wrap: wrap; height: auto; padding: 0 var(--s-3); column-gap: var(--s-3); row-gap: 0; }
+  .app-bar .brand { height: 44px; }
+  .app-bar .caption { display: none; }
+  .tabs { order: 1; width: 100%; height: 36px; overflow-x: auto; border-top: 1px solid var(--border); margin: 0 calc(-1 * var(--s-3)); padding: 0 var(--s-1); width: calc(100% + 2 * var(--s-3)); }
+  .page { padding: var(--s-3); }
+  .map-wrap { height: auto; aspect-ratio: 7 / 5; }
+  .select-force { min-width: 0; }
+}

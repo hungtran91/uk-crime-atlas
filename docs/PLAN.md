@@ -35,8 +35,13 @@ Acceptance:
 - Category breakdown with national-average ticks + Chart/Table toggle
 - 12-month trend vs England & Wales; rank dot plot (click → switch force)
 - /methodology: sources, exclusions, population year, missing-data rule, licence
+- Month kept in the URL (?month=YYYY-MM), shared by the overview and force pages;
+  invalid or absent → latest month; links between the two carry it
+- Force page title wording: decide "{name} Police" vs the force's own name
+  (e.g. "Metropolitan Police" must not become "Metropolitan Police Police")
 Acceptance:
 - [ ] all 43 force pages build statically
+- [ ] ?month= survives reload and navigation between overview and force pages
 - [ ] a force's figures match the overview page for the same month
 - [ ] tabs, toggle and selects work by keyboard
 
