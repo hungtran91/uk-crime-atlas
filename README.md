@@ -4,7 +4,7 @@ A dashboard of police-recorded crime for the 43 territorial police forces of Eng
 a national choropleth map and a detail page per force, with every figure shown as a rate per
 1,000 residents so that forces of very different sizes can be compared.
 
-**Live:** _TBD after deploy_
+**Live:** https://uk-crime-atlas.vercel.app/
 
 ![National overview, dark theme](docs/screenshots/overview-dark.png)
 

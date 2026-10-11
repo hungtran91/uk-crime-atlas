@@ -55,5 +55,18 @@ Acceptance:
   from a ResizeObserver hook
 - LICENSE (MIT for code; data under OGL v3.0); package.json engines pins Node 24
 Acceptance:
-- [ ] live URL works; Lighthouse performance + accessibility ≥ 90
-- [ ] fresh clone → npm install && npm run build succeeds
+- [x] live URL works; Lighthouse performance + accessibility ≥ 90
+- [x] fresh clone → npm install && npm run build succeeds
+
+Performance result (PageSpeed Insights, pagespeed.web.dev, on https://uk-crime-atlas.vercel.app/,
+2026-10-11; performance / accessibility):
+
+| Page | Mobile | Desktop |
+| --- | --- | --- |
+| Overview (/) | 91 / 100 | 100 / 100 |
+| West Yorkshire (/force/west-yorkshire) | 100 / 96 | 100 / 96 |
+
+- Local Lighthouse runs were pessimistic because of the slow CPU on the dev machine; the
+  PageSpeed Insights figures above are the ones of record.
+- Overview mobile performance (91) has little headroom over the ≥ 90 threshold: re-measure after
+  any change that adds weight to the overview page.
