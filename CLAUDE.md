@@ -36,6 +36,12 @@ docs/PLAN.md   phases + acceptance checks
 - City of London: shown on map/tables; excluded from "highest rate" KPI; clipped in rank plot
 - Default month = latest month in data
 - Rate = count / population × 1000, computed only in lib/metrics.ts
+- Greater Manchester has no street-level data in this window: always "no data";
+  /methodology explains why.
+- National rates, averages and ranks use only forces reporting that month
+  (numerator AND population). Ranks display as "Nth of N reporting".
+- Month-over-month deltas are like-for-like: only forces reporting in both months.
+- A category absent from a reporting force-month counts as 0.
 
 ## Data schema
 data/meta.json    { months: "YYYY-MM"[] asc, latestMonth, generatedAt, populationYear,
@@ -48,8 +54,11 @@ public/geo/pfa.topo.json  object "pfa"; each feature has properties.id = forceId
 npm run dev | build | lint | test
 py -3.14 -m venv .venv                          # once; fall back to py -3.11 if a dep fails
 .venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python scripts\ingest.py          # download + aggregate → data/
+# first download data/raw/2026-07.zip manually (ingest.py prints the URL if missing)
+.venv\Scripts\python scripts\ingest.py          # download ONS files + aggregate → data/, data/raw/pfa.geojson
+npm run geo                                     # data/raw/pfa.geojson → public/geo/pfa.topo.json (mapshaper)
 .venv\Scripts\python scripts\validate.py        # sanity checks; non-zero exit on failure
+.venv\Scripts\python scripts\validate.py --spot kent 2026-06   # compare one force-month with its raw CSV
 Never call bare `python` (two versions installed). Process CSVs file by file.
 
 ## Conventions

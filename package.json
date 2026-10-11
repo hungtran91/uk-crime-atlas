@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "geo": "mapshaper data/raw/pfa.geojson -simplify 15% keep-shapes -clean -rename-layers pfa -o public/geo/pfa.topo.json format=topojson quantization=10000"
   },
   "dependencies": {
     "next": "16.3.6",
@@ -20,6 +21,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "mapshaper": "0.7.68",
     "typescript": "^5",
     "vitest": "^5.0.2"
   }

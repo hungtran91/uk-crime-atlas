@@ -1,0 +1,67 @@
+{
+  "months": [
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "latestMonth": "2026-07",
+  "generatedAt": "2026-10-08T14:53:04Z",
+  "populationYear": 2024,
+  "excludedCategories": [
+    "Anti-social behaviour"
+  ],
+  "missing": {
+    "2025-08": [
+      "greater-manchester"
+    ],
+    "2025-09": [
+      "greater-manchester"
+    ],
+    "2025-10": [
+      "greater-manchester"
+    ],
+    "2025-11": [
+      "greater-manchester"
+    ],
+    "2025-12": [
+      "greater-manchester"
+    ],
+    "2026-01": [
+      "greater-manchester"
+    ],
+    "2026-02": [
+      "gloucestershire",
+      "greater-manchester"
+    ],
+    "2026-03": [
+      "gloucestershire",
+      "greater-manchester"
+    ],
+    "2026-04": [
+      "gloucestershire",
+      "greater-manchester"
+    ],
+    "2026-05": [
+      "gloucestershire",
+      "greater-manchester"
+    ],
+    "2026-06": [
+      "gloucestershire",
+      "greater-manchester"
+    ],
+    "2026-07": [
+      "gloucestershire",
+      "greater-manchester",
+      "north-yorkshire"
+    ]
+  }
+}

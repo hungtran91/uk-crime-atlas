@@ -1,0 +1,260 @@
+[
+  {
+    "id": "avon-and-somerset",
+    "name": "Avon and Somerset",
+    "onsCode": "E23000036",
+    "population": 1813665
+  },
+  {
+    "id": "bedfordshire",
+    "name": "Bedfordshire",
+    "onsCode": "E23000026",
+    "population": 749943
+  },
+  {
+    "id": "cambridgeshire",
+    "name": "Cambridgeshire",
+    "onsCode": "E23000023",
+    "population": 933972
+  },
+  {
+    "id": "cheshire",
+    "name": "Cheshire",
+    "onsCode": "E23000006",
+    "population": 1139884
+  },
+  {
+    "id": "city-of-london",
+    "name": "City of London",
+    "onsCode": "E23000034",
+    "population": 15111
+  },
+  {
+    "id": "cleveland",
+    "name": "Cleveland",
+    "onsCode": "E23000013",
+    "population": 600369
+  },
+  {
+    "id": "cumbria",
+    "name": "Cumbria",
+    "onsCode": "E23000002",
+    "population": 510680
+  },
+  {
+    "id": "derbyshire",
+    "name": "Derbyshire",
+    "onsCode": "E23000018",
+    "population": 1096526
+  },
+  {
+    "id": "devon-and-cornwall",
+    "name": "Devon and Cornwall",
+    "onsCode": "E23000035",
+    "population": 1840161
+  },
+  {
+    "id": "dorset",
+    "name": "Dorset",
+    "onsCode": "E23000039",
+    "population": 798914
+  },
+  {
+    "id": "durham",
+    "name": "Durham",
+    "onsCode": "E23000008",
+    "population": 650500
+  },
+  {
+    "id": "dyfed-powys",
+    "name": "Dyfed-Powys",
+    "onsCode": "W15000004",
+    "population": 524219
+  },
+  {
+    "id": "essex",
+    "name": "Essex",
+    "onsCode": "E23000028",
+    "population": 1929610
+  },
+  {
+    "id": "gloucestershire",
+    "name": "Gloucestershire",
+    "onsCode": "E23000037",
+    "population": 669380
+  },
+  {
+    "id": "greater-manchester",
+    "name": "Greater Manchester",
+    "onsCode": "E23000005",
+    "population": 3009664
+  },
+  {
+    "id": "gwent",
+    "name": "Gwent",
+    "onsCode": "W15000002",
+    "population": 601686
+  },
+  {
+    "id": "hampshire",
+    "name": "Hampshire",
+    "onsCode": "E23000030",
+    "population": 2062619
+  },
+  {
+    "id": "hertfordshire",
+    "name": "Hertfordshire",
+    "onsCode": "E23000027",
+    "population": 1236191
+  },
+  {
+    "id": "humberside",
+    "name": "Humberside",
+    "onsCode": "E23000012",
+    "population": 962532
+  },
+  {
+    "id": "kent",
+    "name": "Kent",
+    "onsCode": "E23000032",
+    "population": 1931684
+  },
+  {
+    "id": "lancashire",
+    "name": "Lancashire",
+    "onsCode": "E23000003",
+    "population": 1601645
+  },
+  {
+    "id": "leicestershire",
+    "name": "Leicestershire",
+    "onsCode": "E23000021",
+    "population": 1175364
+  },
+  {
+    "id": "lincolnshire",
+    "name": "Lincolnshire",
+    "onsCode": "E23000020",
+    "population": 789502
+  },
+  {
+    "id": "merseyside",
+    "name": "Merseyside",
+    "onsCode": "E23000004",
+    "population": 1475541
+  },
+  {
+    "id": "metropolitan",
+    "name": "Metropolitan Police",
+    "onsCode": "E23000001",
+    "population": 9074625
+  },
+  {
+    "id": "norfolk",
+    "name": "Norfolk",
+    "onsCode": "E23000024",
+    "population": 940359
+  },
+  {
+    "id": "north-wales",
+    "name": "North Wales",
+    "onsCode": "W15000001",
+    "population": 697115
+  },
+  {
+    "id": "north-yorkshire",
+    "name": "North Yorkshire",
+    "onsCode": "E23000009",
+    "population": 844571
+  },
+  {
+    "id": "northamptonshire",
+    "name": "Northamptonshire",
+    "onsCode": "E23000022",
+    "population": 813682
+  },
+  {
+    "id": "northumbria",
+    "name": "Northumbria",
+    "onsCode": "E23000007",
+    "population": 1509809
+  },
+  {
+    "id": "nottinghamshire",
+    "name": "Nottinghamshire",
+    "onsCode": "E23000019",
+    "population": 1188090
+  },
+  {
+    "id": "south-wales",
+    "name": "South Wales",
+    "onsCode": "W15000003",
+    "population": 1363561
+  },
+  {
+    "id": "south-yorkshire",
+    "name": "South Yorkshire",
+    "onsCode": "E23000011",
+    "population": 1430623
+  },
+  {
+    "id": "staffordshire",
+    "name": "Staffordshire",
+    "onsCode": "E23000015",
+    "population": 1177578
+  },
+  {
+    "id": "suffolk",
+    "name": "Suffolk",
+    "onsCode": "E23000025",
+    "population": 786231
+  },
+  {
+    "id": "surrey",
+    "name": "Surrey",
+    "onsCode": "E23000031",
+    "population": 1248649
+  },
+  {
+    "id": "sussex",
+    "name": "Sussex",
+    "onsCode": "E23000033",
+    "population": 1759789
+  },
+  {
+    "id": "thames-valley",
+    "name": "Thames Valley",
+    "onsCode": "E23000029",
+    "population": 2640201
+  },
+  {
+    "id": "warwickshire",
+    "name": "Warwickshire",
+    "onsCode": "E23000017",
+    "population": 632207
+  },
+  {
+    "id": "west-mercia",
+    "name": "West Mercia",
+    "onsCode": "E23000016",
+    "population": 1340814
+  },
+  {
+    "id": "west-midlands",
+    "name": "West Midlands",
+    "onsCode": "E23000014",
+    "population": 3036605
+  },
+  {
+    "id": "west-yorkshire",
+    "name": "West Yorkshire",
+    "onsCode": "E23000010",
+    "population": 2435236
+  },
+  {
+    "id": "wiltshire",
+    "name": "Wiltshire",
+    "onsCode": "E23000038",
+    "population": 767575
+  }
+]
