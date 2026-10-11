@@ -51,6 +51,9 @@ Acceptance:
 
 ## Phase 5: Ship
 - Public GitHub repo, Vercel Hobby deploy, README (screenshots, sources, refresh steps, stack)
+- Layout check at 1440, 1100, 1024, 768 and 390px on every page; charts take an explicit width
+  from a ResizeObserver hook
+- LICENSE (MIT for code; data under OGL v3.0); package.json engines pins Node 24
 Acceptance:
 - [ ] live URL works; Lighthouse performance + accessibility ≥ 90
 - [ ] fresh clone → npm install && npm run build succeeds
