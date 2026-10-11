@@ -3,11 +3,17 @@ import { createDataset, type CountRow, type Force, type Meta } from "@/lib/data"
 import {
   binIndex,
   CITY_OF_LONDON_ID,
+  forceCategories,
+  forceChange,
   forceMonth,
+  forceRateSeries,
+  forceStanding,
   highestRate,
   monthOverMonth,
   national,
   nationalRateSeries,
+  nationalWithout,
+  rankBand,
   rankForces,
   rate,
 } from "@/lib/metrics";
@@ -178,5 +184,85 @@ describe("binIndex", () => {
     expect(binIndex(10.49)).toBe(6);
     expect(binIndex(10.5)).toBe(7);
     expect(binIndex(48)).toBe(7);
+  });
+});
+
+describe("forceRateSeries", () => {
+  it("has a null, not a zero, for a missing month", () => {
+    expect(forceRateSeries(ds, "a")).toEqual([10, 12, 10]);
+    expect(forceRateSeries(ds, "b")).toEqual([5, null, 10]);
+  });
+});
+
+describe("forceChange", () => {
+  it("is null for the first month", () => {
+    expect(forceChange(ds, "a", "2026-01")).toBeNull();
+  });
+
+  it("gives the change in rate points and in percent", () => {
+    const c = forceChange(ds, "a", "2026-02");
+    expect(c?.prevMonth).toBe("2026-01");
+    expect(c?.ratePoints).toBeCloseTo(2, 12);
+    expect(c?.pct).toBeCloseTo(0.2, 12);
+  });
+
+  it("is null when either month is missing", () => {
+    expect(forceChange(ds, "b", "2026-02")).toBeNull();
+    expect(forceChange(ds, "b", "2026-03")).toBeNull();
+  });
+});
+
+describe("forceCategories", () => {
+  it("is null for a missing force-month", () => {
+    expect(forceCategories(ds, "b", "2026-02")).toBeNull();
+  });
+
+  it("puts the force rate next to the reporting-forces national rate", () => {
+    const natRate = (count: number) => (count / 3100) * 1000;
+    const cats = forceCategories(ds, "a", "2026-03");
+    expect(cats?.map((c) => [c.category, c.count, c.per1000])).toEqual([
+      ["Burglary", 9, 9],
+      ["Drugs", 0, 0],
+      ["Robbery", 1, 1],
+    ]);
+    expect(cats?.[0].nationalPer1000).toBeCloseTo(natRate(27), 12);
+    expect(cats?.[0].vsNational).toBeCloseTo(9 / natRate(27) - 1, 12);
+    expect(cats?.[1].vsNational).toBe(-1);
+    expect(cats?.map((c) => c.momPct)).toEqual([0.125, -1, null]);
+  });
+
+  it("has no month-over-month change when the previous month is missing", () => {
+    expect(forceCategories(ds, "b", "2026-03")?.every((c) => c.momPct === null)).toBe(true);
+    expect(forceCategories(ds, "a", "2026-01")?.every((c) => c.momPct === null)).toBe(true);
+  });
+});
+
+describe("rankBand", () => {
+  it("splits reporting forces into top quartile, middle half and bottom quartile", () => {
+    expect([1, 10, 11, 30, 31, 40].map((r) => rankBand(r, 40))).toEqual([
+      "top", "top", "middle", "middle", "bottom", "bottom",
+    ]);
+    expect(rankBand(11, 41)).toBe("top");
+    expect(rankBand(31, 41)).toBe("bottom");
+  });
+});
+
+describe("nationalWithout", () => {
+  it("recomputes the national rate without one force", () => {
+    expect(nationalWithout(ds, "2026-01", "b")).toBeCloseTo((15 / 1100) * 1000, 12);
+    expect(nationalWithout(ds, "2026-01", "z")).toBe(national(ds, "2026-01").rate);
+  });
+});
+
+describe("forceStanding", () => {
+  it("is null for a force that is not reporting", () => {
+    expect(forceStanding(ds, "b", "2026-02")).toBeNull();
+    expect(forceStanding(ds, "z", "2026-02")).toBeNull();
+  });
+
+  it("ranks among reporting forces and compares with their national rate", () => {
+    const s = forceStanding(ds, "a", "2026-02");
+    expect(s).toMatchObject({ rate: 12, total: 12, rank: 2, of: 2, band: "bottom" });
+    expect(s?.vsNational).toBeCloseTo(12 / ((16 / 1100) * 1000) - 1, 12);
   });
 });

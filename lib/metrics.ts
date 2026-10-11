@@ -179,3 +179,90 @@ export function binIndex(value: number | null): number | null {
   while (i < RATE_BINS.length && value >= RATE_BINS[i]) i++;
   return i + 1;
 }
+
+export interface ForceChange {
+  prevMonth: string;
+  /** Change in crimes per 1,000; same convention as MonthOverMonth.ratePoints. */
+  ratePoints: number;
+  pct: number | null;
+}
+
+export interface ForceCategory {
+  category: string;
+  count: number;
+  per1000: number | null;
+  /** National count over the reporting forces' population. */
+  nationalPer1000: number | null;
+  /** per1000 / nationalPer1000 − 1 */
+  vsNational: number | null;
+  /** Null when the force published nothing in the previous month. */
+  momPct: number | null;
+}
+
+export type RankBand = "top" | "middle" | "bottom";
+
+/** A force's rate for every month in order; null where it published nothing (a gap, never 0). */
+export function forceRateSeries(ds: Dataset, forceId: string): (number | null)[] {
+  return ds.meta.months.map((m) => forceMonth(ds, forceId, m)?.rate ?? null);
+}
+
+/** One force vs its own previous month. Null for the first month or when either month has no rate. */
+export function forceChange(ds: Dataset, forceId: string, month: string): ForceChange | null {
+  const i = ds.meta.months.indexOf(month);
+  if (i <= 0) return null;
+  const prevMonth = ds.meta.months[i - 1];
+  const cur = forceMonth(ds, forceId, month);
+  const prev = forceMonth(ds, forceId, prevMonth);
+  if (!cur || !prev || cur.rate === null || prev.rate === null) return null;
+  return { prevMonth, ratePoints: cur.rate - prev.rate, pct: ratio(cur.total, prev.total) };
+}
+
+/** Per-category rates for a force next to the national rate, in dataset order. Null when the force did not report. */
+export function forceCategories(ds: Dataset, forceId: string, month: string): ForceCategory[] | null {
+  const cur = forceMonth(ds, forceId, month);
+  if (!cur) return null;
+  const i = ds.meta.months.indexOf(month);
+  const prev = i > 0 ? forceMonth(ds, forceId, ds.meta.months[i - 1]) : null;
+  const nat = national(ds, month);
+  const pop = population(ds, forceId);
+  return cur.categories.map((c, k) => {
+    const per1000 = rate(c.count, pop);
+    const nationalPer1000 = nat.reporting ? rate(nat.categories[k].count, nat.population) : null;
+    return {
+      category: c.category,
+      count: c.count,
+      per1000,
+      nationalPer1000,
+      vsNational: per1000 !== null && nationalPer1000 ? per1000 / nationalPer1000 - 1 : null,
+      momPct: prev ? ratio(c.count, prev.categories[k].count) : null,
+    };
+  });
+}
+
+/** Where a rank sits among the reporting forces (rank 1 = highest rate). */
+export function rankBand(rank: number, of: number): RankBand {
+  if (rank <= Math.ceil(of / 4)) return "top";
+  return rank > of * 0.75 ? "bottom" : "middle";
+}
+
+/** National rate with one force left out: shows how a force dropping out moves the national figure. */
+export function nationalWithout(ds: Dataset, month: string, forceId: string): number | null {
+  const rows = reportingForces(ds, month).filter((r) => r.forceId !== forceId);
+  if (!rows.length) return null;
+  const total = rows.reduce((a, r) => a + r.total, 0);
+  return rate(total, rows.reduce((a, r) => a + population(ds, r.forceId), 0));
+}
+
+export interface ForceStanding extends RankedForce {
+  band: RankBand;
+  /** rate / national rate − 1 */
+  vsNational: number | null;
+}
+
+/** A force's rate, rank and distance from the national rate. Null when it is not reporting that month. */
+export function forceStanding(ds: Dataset, forceId: string, month: string): ForceStanding | null {
+  const r = rankForces(ds, month).find((x) => x.forceId === forceId);
+  if (!r) return null;
+  const nat = national(ds, month).rate;
+  return { ...r, band: rankBand(r.rank, r.of), vsNational: nat ? r.rate / nat - 1 : null };
+}
