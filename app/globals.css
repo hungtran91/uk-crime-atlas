@@ -231,6 +231,52 @@ main { flex: 1; }
 .tooltip.static { position: relative; opacity: 1; }
 .cat-chart .cat-value { fill: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
 
+/* Force detail */
+.span-12 { grid-column: 1 / -1; }
+.kpi-value small { font-size: var(--fs-md); color: var(--text-3); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+.chart-legend { margin-top: 12px; }
+.card-b > .empty { height: 100%; }
+.sw-line { width: 14px; height: 2px; border-radius: 1px; flex: none; }
+.sw-dash { width: 14px; height: 0; border-top: 2px dashed var(--text-3); flex: none; }
+.sw-tick { width: 2px; height: 12px; background: var(--text); border-radius: 1px; flex: none; }
+.sw-force { background: var(--cat-1); }
+.cat-chart .cat-bar { fill: var(--cat-1); }
+.cat-chart .nat-tick { fill: var(--text); }
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.table th, .table td { padding: 6px var(--s-3); border-bottom: 1px solid var(--border); text-align: left; }
+.table thead th { font-weight: 500; color: var(--text-3); font-size: var(--fs-xs); white-space: nowrap; }
+.table tbody th { font-weight: 400; }
+.table tbody tr:last-child > * { border-bottom: 0; }
+.table .r { text-align: right; }
+.table tbody tr:hover > * { background: var(--surface-2); }
+
+.trend { font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.trend svg:focus, .trend .recharts-surface:focus { outline: none; }
+.trend .recharts-cartesian-grid line { stroke: var(--grid); }
+.trend .recharts-cartesian-axis-tick-value { fill: var(--text-3); }
+.trend .recharts-tooltip-cursor { stroke: var(--border-strong); }
+.trend .line-national .recharts-line-curve { stroke: var(--text-3); }
+.trend .line-force .recharts-line-curve { stroke: var(--cat-1); }
+.trend .trend-dot { fill: var(--surface); stroke: var(--cat-1); stroke-width: 1.5; }
+.trend .trend-dot.selected { fill: var(--cat-1); }
+
+.rank-plot { position: relative; height: 110px; margin: 0 36px 0 12px; font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.rank-grid { position: absolute; top: 30px; bottom: 22px; width: 1px; background: var(--grid); }
+.rank-tick { position: absolute; bottom: 0; transform: translateX(-50%); }
+.rank-ref { position: absolute; top: 22px; bottom: 22px; border-left: 1px dashed var(--text-2); }
+.rank-ref-label { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; color: var(--text-2); }
+.rank-dot { position: absolute; top: 59px; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--text-3); opacity: .45; }
+.rank-dot:hover, .rank-dot:focus-visible { opacity: 1; outline: 2px solid var(--text); outline-offset: 1px; }
+.rank-dot.hl { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: var(--accent); opacity: 1; box-shadow: 0 0 0 2px var(--surface); z-index: 1; }
+/* Beyond the axis (City of London): an arrow at the right edge instead of a dot. */
+.rank-dot.over { left: calc(100% + 14px); width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 0; clip-path: polygon(0 0, 100% 50%, 0 100%); box-shadow: none; }
+.rank-name { position: absolute; top: 70px; transform: translateX(-50%); white-space: nowrap; color: var(--text); font-weight: 600; }
+.rank-name.start { transform: none; margin-left: -7px; }
+.rank-name.end { transform: translateX(-100%); margin-left: 7px; }
+.rank-name.over { left: calc(100% + 20px); transform: translateX(-100%); }
+
 /* Narrow screens: the app bar wraps its tabs onto a second row and the map keeps its aspect ratio. */
 @media (max-width: 760px) {
   .app-bar { flex-wrap: wrap; height: auto; padding: 0 var(--s-3); column-gap: var(--s-3); row-gap: 0; }
