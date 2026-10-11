@@ -69,7 +69,8 @@ export default function TrendChart({ months, force, national, forceName, selecte
     <>
       <div className="trend" role="img" aria-label={label} style={{ height: HEIGHT }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: 0 }}>
+          {/* No category gap: gap bands fill their month, so consecutive missing months join into one block. */}
+          <ComposedChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: 0 }} barCategoryGap={0}>
             <defs>
               <pattern id="trend-hatch" width={5} height={5} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect className="hatch-bg" width={5} height={5} />
@@ -90,9 +91,8 @@ export default function TrendChart({ months, force, national, forceName, selecte
             <Tooltip content={<TrendTooltip forceName={forceName} />} isAnimationActive={false} />
             <Bar
               yAxisId="gap"
+              className="trend-gap"
               dataKey="gap"
-              barSize={10}
-              radius={2}
               fill="url(#trend-hatch)"
               activeBar={false}
               isAnimationActive={false}
