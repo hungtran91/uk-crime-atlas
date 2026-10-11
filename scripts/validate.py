@@ -1,7 +1,7 @@
 """Sanity checks for the generated data. Exits non-zero if any check fails.
 
 Usage:
-  validate.py                      run all checks
+  validate.py                      run all checks; on success write data/reference.json
   validate.py --spot FORCE MONTH   compare one force-month in counts.json with its raw CSV
 """
 
@@ -21,6 +21,7 @@ DATA = ROOT / "data"
 TOPO = ROOT / "public" / "geo" / "pfa.topo.json"
 LOOKUP = ROOT / "scripts" / "force_lookup.csv"
 ARCHIVE_GLOB = "data/raw/????-??.zip"
+REFERENCE = "reference.json"
 
 N_FORCES = 43
 N_MONTHS = 12
@@ -103,23 +104,52 @@ def check_banned_strings() -> None:
             check(s not in text, f"{path.name}: contains banned string {s!r}")
 
 
-def check_rates(counts: list[dict], meta: dict, forces: list[dict]) -> None:
+def check_rates(counts: list[dict], meta: dict, forces: list[dict]) -> dict:
+    """Checks national rates and returns the reference figures that lib/ tests compare against."""
     pop = {f["id"]: f["population"] for f in forces}
     by_fm: dict[tuple[str, str], int] = defaultdict(int)
     for r in counts:
         by_fm[(r["forceId"], r["month"])] += r["count"]
-    print("National rate per 1,000 (reporting forces only):")
-    for m in meta["months"]:
-        reporting = [f for f in pop if f not in meta["missing"].get(m, [])]
-        rate = sum(by_fm[(f, m)] for f in reporting) / sum(pop[f] for f in reporting) * 1000
-        print(f"  {m}: {rate:5.2f}  ({len(reporting)} forces)")
+    months = meta["months"]
+
+    def reporting(m: str) -> list[str]:
+        return [f for f in pop if f not in meta["missing"].get(m, [])]
+
+    national = []
+    mom = []
+    print("National rate per 1,000 (reporting forces only); month-over-month like-for-like:")
+    for i, m in enumerate(months):
+        rep = reporting(m)
+        rate = sum(by_fm[(f, m)] for f in rep) / sum(pop[f] for f in rep) * 1000
+        national.append({"month": m, "rate": rate, "reporting": len(rep)})
+        line = f"  {m}: {rate:5.2f}  ({len(rep)} forces)"
         check(RATE_RANGE[0] <= rate <= RATE_RANGE[1], f"rate {m}: {rate:.2f} outside {RATE_RANGE}")
+        if i > 0:
+            prev = months[i - 1]
+            prev_rep = set(reporting(prev))
+            both = [f for f in rep if f in prev_rep]
+            cur_n = sum(by_fm[(f, m)] for f in both)
+            prev_n = sum(by_fm[(f, prev)] for f in both)
+            both_pop = sum(pop[f] for f in both)
+            pct = cur_n / prev_n - 1
+            points = cur_n / both_pop * 1000 - prev_n / both_pop * 1000
+            mom.append({"month": m, "prevMonth": prev, "forces": len(both), "pct": pct, "ratePoints": points})
+            line += f"   MoM {pct * 100:+6.2f}%  {points:+.3f} pts  ({len(both)} forces in both)"
+        print(line)
+
     latest = meta["latestMonth"]
-    rates = sorted(
-        (by_fm[(f, latest)] / pop[f] * 1000, f) for f in pop if f not in meta["missing"].get(latest, [])
-    )
-    print(f"Lowest {latest}:  " + ", ".join(f"{f} {r:.1f}" for r, f in rates[:3]))
-    print(f"Highest {latest}: " + ", ".join(f"{f} {r:.1f}" for r, f in rates[-3:]))
+    # Same order as lib/metrics.ts rankForces: rate descending, then id ascending.
+    ranked = sorted(((by_fm[(f, latest)] / pop[f] * 1000, f) for f in reporting(latest)), key=lambda x: (-x[0], x[1]))
+    rows = [{"forceId": f, "rate": r, "rank": i + 1} for i, (r, f) in enumerate(ranked)]
+    print(f"Highest {latest}: " + ", ".join(f"{x['forceId']} {x['rate']:.1f}" for x in rows[:3]))
+    print(f"Lowest {latest}:  " + ", ".join(f"{x['forceId']} {x['rate']:.1f}" for x in rows[-3:]))
+    return {
+        "generatedFrom": meta["generatedAt"],
+        "latestMonth": latest,
+        "national": national,
+        "monthOverMonth": mom,
+        "latestRanks": {"of": len(rows), "top": rows[:3], "bottom": rows[-3:]},
+    }
 
 
 def ring_points(ring: list[int], arcs: list[list[list[int]]]) -> list[tuple[int, int]]:
@@ -213,7 +243,7 @@ def main() -> int:
     check_meta(meta, force_ids)
     check_counts(counts, meta, force_ids)
     check_banned_strings()
-    check_rates(counts, meta, forces)
+    reference = check_rates(counts, meta, forces)
     check_topo(force_ids)
 
     missing = sum(len(v) for v in meta["missing"].values())
@@ -223,7 +253,9 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
-    print("\nAll checks passed.")
+    # Only written on success, so lib/ tests never compare against figures from bad data.
+    (DATA / REFERENCE).write_text(json.dumps(reference, indent=2) + "\n", encoding="utf-8")
+    print(f"\nAll checks passed. Wrote data/{REFERENCE}.")
     return 0
 
 

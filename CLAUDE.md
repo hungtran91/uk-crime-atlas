@@ -48,6 +48,7 @@ data/meta.json    { months: "YYYY-MM"[] asc, latestMonth, generatedAt, populatio
                     excludedCategories: string[], missing: { [month]: forceId[] } }
 data/forces.json  [{ id: slug e.g. "west-yorkshire", name, onsCode, population }]
 data/counts.json  [{ forceId, month, category, count }]  (long format)
+data/reference.json  written by validate.py on success; expected figures for lib/ real-data tests
 public/geo/pfa.topo.json  object "pfa"; each feature has properties.id = forceId
 
 ## Commands
@@ -57,7 +58,7 @@ py -3.14 -m venv .venv                          # once; fall back to py -3.11 if
 # first download data/raw/2026-07.zip manually (ingest.py prints the URL if missing)
 .venv\Scripts\python scripts\ingest.py          # download ONS files + aggregate → data/, data/raw/pfa.geojson
 npm run geo                                     # data/raw/pfa.geojson → public/geo/pfa.topo.json (mapshaper)
-.venv\Scripts\python scripts\validate.py        # sanity checks; non-zero exit on failure
+.venv\Scripts\python scripts\validate.py        # sanity checks; non-zero exit on failure; writes data/reference.json
 .venv\Scripts\python scripts\validate.py --spot kent 2026-06   # compare one force-month with its raw CSV
 Never call bare `python` (two versions installed). Process CSVs file by file.
 
