@@ -37,13 +37,17 @@ Acceptance:
 - /methodology: sources, exclusions, population year, missing-data rule, licence
 - Month kept in the URL (?month=YYYY-MM), shared by the overview and force pages;
   invalid or absent → latest month; links between the two carry it
-- Force page title wording: decide "{name} Police" vs the force's own name
-  (e.g. "Metropolitan Police" must not become "Metropolitan Police Police")
+- Force page title wording. Decided: the force name as in the data ("West Yorkshire",
+  "Metropolitan Police"), no "Police" suffix
+- Incomplete months (added in review): a force-month below 50% of the force's median
+  month is excluded like a missing month; ingest.py flags it, validate.py rechecks it,
+  /methodology lists it. Flags Northumbria Jan 2026 (2,719 crimes, 25% of its median)
+- /methodology also covers the days-in-month effect
 Acceptance:
-- [ ] all 43 force pages build statically
-- [ ] ?month= survives reload and navigation between overview and force pages
-- [ ] a force's figures match the overview page for the same month
-- [ ] tabs, toggle and selects work by keyboard
+- [x] all 43 force pages build statically
+- [x] ?month= survives reload and navigation between overview and force pages
+- [x] a force's figures match the overview page for the same month
+- [x] tabs, toggle and selects work by keyboard
 
 ## Phase 5: Ship
 - Public GitHub repo, Vercel Hobby deploy, README (screenshots, sources, refresh steps, stack)
