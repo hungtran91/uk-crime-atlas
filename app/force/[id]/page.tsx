@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import ForceDashboard from "@/components/ForceDashboard";
 import { loadDataset } from "@/lib/data";
 import { buildForceModel } from "@/lib/force";
@@ -23,5 +24,10 @@ export default async function ForceDetailPage({ params }: Props) {
   const model = buildForceModel(loadDataset(), id);
   if (!model) notFound();
 
-  return <ForceDashboard model={model} />;
+  // As on the overview: the boundary only makes hydration interruptible.
+  return (
+    <Suspense>
+      <ForceDashboard model={model} />
+    </Suspense>
+  );
 }

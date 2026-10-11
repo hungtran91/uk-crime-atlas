@@ -53,7 +53,9 @@ function ForceView({
       <div className="page-h">
         <div className="lead">
           <div className="crumb">
-            <Link href={href("/")}>National overview</Link>
+            <Link href={href("/")} prefetch={false}>
+              National overview
+            </Link>
             <span>/</span>
             <span>Force detail</span>
           </div>

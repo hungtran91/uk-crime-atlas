@@ -71,6 +71,8 @@
 [data-theme] *, [data-theme] *::before, [data-theme] *::after { box-sizing: border-box; }
 [data-theme] a { color: var(--accent); text-decoration: none; }
 [data-theme] a:hover { text-decoration: underline; }
+/* Links inside running text are underlined: colour alone does not set them apart. */
+[data-theme] :is(p, .card-f, .empty-s, .prose) a { text-decoration: underline; text-underline-offset: 2px; }
 [data-theme] :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 html, body { margin: 0; min-height: 100%; }

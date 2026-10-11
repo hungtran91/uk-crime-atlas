@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 
 /**
  * Width of an element in whole pixels, tracked with a ResizeObserver; null until first measured.
@@ -13,7 +13,11 @@ export function useElementWidth<T extends HTMLElement>() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const measure = () => setWidth(Math.floor(el.getBoundingClientRect().width));
+    // A transition, so drawing the chart never blocks input.
+    const measure = () => {
+      const next = Math.floor(el.getBoundingClientRect().width);
+      startTransition(() => setWidth(next));
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);

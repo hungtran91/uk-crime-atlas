@@ -13,7 +13,10 @@ const LINKS = [
   { href: "/methodology", label: "Methodology", isActive: (p: string) => p === "/methodology" },
 ];
 
-/** Brand link and main tabs. Both keep the selected month, so it survives moving between pages. */
+/**
+ * Brand link and main tabs. Both keep the selected month, so it survives moving between pages.
+ * No prefetch: the overview payload is large and would be fetched on every page load.
+ */
 export default function NavLinks({ months, latest }: { months: string[]; latest: string }) {
   const pathname = usePathname();
 
@@ -21,7 +24,7 @@ export default function NavLinks({ months, latest }: { months: string[]; latest:
     <WithMonth months={months} latest={latest}>
       {(month) => (
         <>
-          <Link href={withMonth("/", month, latest)} className="brand">
+          <Link href={withMonth("/", month, latest)} prefetch={false} className="brand">
             <span className="brand-mark" aria-hidden="true" />
             UK Crime Atlas
           </Link>
@@ -34,6 +37,7 @@ export default function NavLinks({ months, latest }: { months: string[]; latest:
                 <Link
                   key={l.href}
                   href={withMonth(path, month, latest)}
+                  prefetch={false}
                   className="tab"
                   aria-current={active ? "page" : undefined}
                 >

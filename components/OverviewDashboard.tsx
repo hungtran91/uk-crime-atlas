@@ -104,7 +104,13 @@ function OverviewView({
             Highest rate <span className="subtle">· excl. City of London</span>
           </div>
           <div className="kpi-value name">
-            {highest ? <Link href={href(`/force/${highest.forceId}`)}>{highest.name}</Link> : "—"}
+            {highest ? (
+              <Link href={href(`/force/${highest.forceId}`)} prefetch={false}>
+                {highest.name}
+              </Link>
+            ) : (
+              "—"
+            )}
           </div>
           <div />
           <div className="kpi-meta">

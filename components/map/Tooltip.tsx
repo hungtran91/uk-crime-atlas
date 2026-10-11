@@ -27,7 +27,8 @@ export default function Tooltip({ id, anchor, children }: Props) {
   });
 
   return (
-    <div ref={ref} id={id} role="tooltip" className={anchor ? "tooltip on" : "tooltip"}>
+    // The role only while shown: an empty tooltip has no accessible name.
+    <div ref={ref} id={id} role={anchor ? "tooltip" : undefined} className={anchor ? "tooltip on" : "tooltip"}>
       {children}
     </div>
   );
