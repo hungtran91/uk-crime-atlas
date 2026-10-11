@@ -1,6 +1,7 @@
 "use client";
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from "recharts";
+import { useElementWidth } from "@/components/charts/useElementWidth";
 import { fmt } from "@/lib/format";
 import type { OverviewCategory } from "@/lib/overview";
 
@@ -32,11 +33,20 @@ function CategoryTooltip({ active, payload }: { active?: boolean; payload?: read
 export default function TopCategories({ categories, label }: { categories: OverviewCategory[]; label: string }) {
   const max = Math.max(...categories.map((c) => c.count), 1) * 1.04;
   const countByCategory = new Map(categories.map((c) => [c.category, c.count]));
+  const height = categories.length * ROW_HEIGHT;
+  const [ref, width] = useElementWidth<HTMLDivElement>();
 
   return (
-    <div className="cat-chart" role="img" aria-label={label} style={{ height: categories.length * ROW_HEIGHT }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={categories} layout="vertical" margin={{ top: 0, right: 0, bottom: 0, left: 0 }} barCategoryGap={0}>
+    <div ref={ref} className="cat-chart" role="img" aria-label={label} style={{ height }}>
+      {width !== null && width > 0 && (
+        <BarChart
+          width={width}
+          height={height}
+          data={categories}
+          layout="vertical"
+          margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          barCategoryGap={0}
+        >
           <XAxis type="number" hide domain={[0, max]} />
           <YAxis
             type="category"
@@ -69,7 +79,7 @@ export default function TopCategories({ categories, label }: { categories: Overv
           <Tooltip content={<CategoryTooltip />} cursor={false} isAnimationActive={false} />
           <Bar dataKey="count" barSize={BAR_HEIGHT} radius={2} background={{ radius: 2 }} isAnimationActive={false} />
         </BarChart>
-      </ResponsiveContainer>
+      )}
     </div>
   );
 }

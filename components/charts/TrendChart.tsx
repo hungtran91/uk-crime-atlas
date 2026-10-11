@@ -1,7 +1,8 @@
 "use client";
 
-import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, CartesianGrid, ComposedChart, Line, Tooltip, XAxis, YAxis } from "recharts";
 import { NATIONAL_LABEL } from "@/components/charts/CategoryBreakdown";
+import { useElementWidth } from "@/components/charts/useElementWidth";
 import { fmt, monthLabel, monthShort } from "@/lib/format";
 
 const HEIGHT = 250;
@@ -64,13 +65,20 @@ export default function TrendChart({ months, force, national, forceName, selecte
   }));
   const selectedIndex = months.indexOf(selected);
   const hasGap = force.some((v) => v === null);
+  const [ref, width] = useElementWidth<HTMLDivElement>();
 
   return (
     <>
-      <div className="trend" role="img" aria-label={label} style={{ height: HEIGHT }}>
-        <ResponsiveContainer width="100%" height="100%">
-          {/* No category gap: gap bands fill their month, so consecutive missing months join into one block. */}
-          <ComposedChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: 0 }} barCategoryGap={0}>
+      <div ref={ref} className="trend" role="img" aria-label={label} style={{ height: HEIGHT }}>
+        {/* No category gap: gap bands fill their month, so consecutive missing months join into one block. */}
+        {width !== null && width > 0 && (
+          <ComposedChart
+            width={width}
+            height={HEIGHT}
+            data={data}
+            margin={{ top: 12, right: 8, bottom: 0, left: 0 }}
+            barCategoryGap={0}
+          >
             <defs>
               <pattern id="trend-hatch" width={5} height={5} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect className="hatch-bg" width={5} height={5} />
@@ -129,7 +137,7 @@ export default function TrendChart({ months, force, national, forceName, selecte
               }
             />
           </ComposedChart>
-        </ResponsiveContainer>
+        )}
       </div>
       <div className="legend-row caption chart-legend">
         <span className="legend-item">

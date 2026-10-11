@@ -1,7 +1,8 @@
 "use client";
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, type BarShapeProps } from "recharts";
+import { Bar, BarChart, Tooltip, XAxis, YAxis, type BarShapeProps } from "recharts";
 import Delta from "@/components/cards/Delta";
+import { useElementWidth } from "@/components/charts/useElementWidth";
 import { fmt } from "@/lib/format";
 import type { ForceCategory } from "@/lib/metrics";
 
@@ -44,6 +45,8 @@ interface Props {
 export function CategoryChart({ categories, forceName, label }: Props) {
   const max = Math.max(...categories.flatMap((c) => [c.per1000 ?? 0, c.nationalPer1000 ?? 0]), 0.01) * 1.04;
   const rateByCategory = new Map(categories.map((c) => [c.category, c.per1000]));
+  const height = categories.length * ROW_HEIGHT;
+  const [ref, width] = useElementWidth<HTMLDivElement>();
 
   // The bar plus a tick at the national rate. `background` is the full-width track, so it gives the axis extent.
   const renderBar = ({ x, y, width, height, background, payload }: BarShapeProps) => {
@@ -68,9 +71,16 @@ export function CategoryChart({ categories, forceName, label }: Props) {
 
   return (
     <>
-      <div className="cat-chart" role="img" aria-label={label} style={{ height: categories.length * ROW_HEIGHT }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={categories} layout="vertical" margin={{ top: 0, right: 0, bottom: 0, left: 0 }} barCategoryGap={0}>
+      <div ref={ref} className="cat-chart" role="img" aria-label={label} style={{ height }}>
+        {width !== null && width > 0 && (
+          <BarChart
+            width={width}
+            height={height}
+            data={categories}
+            layout="vertical"
+            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+            barCategoryGap={0}
+          >
             <XAxis type="number" hide domain={[0, max]} />
             <YAxis
               type="category"
@@ -112,7 +122,7 @@ export function CategoryChart({ categories, forceName, label }: Props) {
               isAnimationActive={false}
             />
           </BarChart>
-        </ResponsiveContainer>
+        )}
       </div>
       <div className="legend-row caption chart-legend">
         <span className="legend-item">
