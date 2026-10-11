@@ -223,9 +223,10 @@ main { flex: 1; }
 /* Charts (Recharts: colours via CSS so they follow the theme) */
 .spark .recharts-line-curve { stroke: var(--cat-1); }
 .spark .spark-dot { fill: var(--cat-1); }
-.cat-chart { height: 200px; font-size: var(--fs-sm); }
-.cat-chart .recharts-bar-rectangle path, .cat-chart .recharts-bar-rectangle rect { fill: var(--cat-1); }
-.cat-chart .recharts-bar-background-rectangle path, .cat-chart .recharts-bar-background-rectangle rect { fill: var(--surface-2); }
-.cat-chart .recharts-yAxis text { fill: var(--text-2); }
-.cat-chart .recharts-label-list text { fill: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.cat-chart { font-size: var(--fs-sm); }
+.cat-chart .recharts-bar-rectangle .recharts-rectangle { fill: var(--cat-1); }
+.cat-chart .recharts-bar-background-rectangle { fill: var(--surface-2); }
+.cat-chart .cat-label { fill: var(--text-2); }
 .cat-chart svg:focus, .cat-chart .recharts-surface:focus, .spark svg:focus { outline: none; }
+.tooltip.static { position: relative; opacity: 1; }
+.cat-chart .cat-value { fill: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }

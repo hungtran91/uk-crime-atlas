@@ -62,6 +62,14 @@ describe("loadMapGeometry", () => {
     }
   });
 
+  it("has no area that fills the whole map (flipped ring)", () => {
+    for (const a of [...geo.areas, ...geo.inset.areas]) {
+      const xs = [...a.d.matchAll(/[ML](-?[\d.]+),/g)].map((m) => Number(m[1]));
+      expect(xs.length).toBeGreaterThan(3);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(geo.width / 2);
+    }
+  });
+
   it("puts the Met and City of London in the London inset", () => {
     expect(geo.inset.areas.map((a) => a.id).sort()).toEqual([CITY_OF_LONDON_ID, METROPOLITAN_ID].sort());
     expect(geo.inset.areas.every((a) => a.d.length > 0)).toBe(true);
