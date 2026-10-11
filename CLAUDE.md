@@ -33,6 +33,11 @@ docs/PLAN.md   phases + acceptance checks
 - Exclude "Anti-social behaviour" (not recorded crime)
 - Exclude British Transport Police and PSNI (Northern Ireland)
 - A force-month with no rows is MISSING, never 0 → rate null → "no data" state
+- A force-month whose total is below 50% of that force's median month in the window is
+  INCOMPLETE (a partial upload): ingest.py drops its rows and lists it in meta.missing and
+  meta.incomplete, so it is treated exactly like missing (no rate, out of national figures,
+  ranks and deltas). UI text: "Incomplete data for {month} — excluded" instead of
+  "No data published for {month}"; both come from noDataLabel() in lib/format.ts.
 - City of London: shown on map/tables; excluded from "highest rate" KPI; clipped in rank plot
 - Default month = latest month in data
 - Rate = count / population × 1000, computed only in lib/metrics.ts
@@ -45,7 +50,10 @@ docs/PLAN.md   phases + acceptance checks
 
 ## Data schema
 data/meta.json    { months: "YYYY-MM"[] asc, latestMonth, generatedAt, populationYear,
-                    excludedCategories: string[], missing: { [month]: forceId[] } }
+                    excludedCategories: string[], missing: { [month]: forceId[] },
+                    incompleteThreshold: 0.5,
+                    incomplete: { [month]: [{ forceId, count, medianCount }] } }
+                  missing = no usable data (not published OR incomplete); incomplete ⊆ missing
 data/forces.json  [{ id: slug e.g. "west-yorkshire", name, onsCode, population }]
 data/counts.json  [{ forceId, month, category, count }]  (long format)
 data/reference.json  written by validate.py on success; expected figures for lib/ real-data tests

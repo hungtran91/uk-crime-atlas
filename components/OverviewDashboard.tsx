@@ -38,7 +38,8 @@ function OverviewView({
   const data = model.byMonth[month];
   const { mom, highest } = data;
   const label = monthLabel(month);
-  const missing = data.missingNames;
+  const { notPublishedNames, incompleteNames } = data;
+  const excluded = notPublishedNames.length + incompleteNames.length;
 
   return (
     <div className="page">
@@ -132,13 +133,15 @@ function OverviewView({
             <ChoroplethMap geometry={geometry} month={month} latestMonth={model.latestMonth} rows={data.rows} names={names} />
             <Legend />
           </div>
-          {missing.length > 0 && (
+          {excluded > 0 && (
             <div className="card-f">
               <span className="legend-item">
                 <span className="sw nodata-fill" />
                 <span>
-                  {missing.join(", ")}: no data published for {label}. National figures exclude{" "}
-                  {missing.length === 1 ? "this force" : "these forces"}. <Link href={href("/methodology")}>Methodology</Link>
+                  {notPublishedNames.length > 0 && `${notPublishedNames.join(", ")}: no data published for ${label}. `}
+                  {incompleteNames.length > 0 && `${incompleteNames.join(", ")}: incomplete data for ${label} — excluded. `}
+                  National figures exclude {excluded === 1 ? "this force" : "these forces"}.{" "}
+                  <Link href={href("/methodology")}>Methodology</Link>
                 </span>
               </span>
             </div>

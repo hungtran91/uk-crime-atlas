@@ -5,6 +5,8 @@ import reference from "@/data/reference.json";
 import { loadDataset } from "@/lib/data";
 import {
   CITY_OF_LONDON_ID,
+  forceChange,
+  forceMonth,
   highestRate,
   monthOverMonth,
   national,
@@ -89,5 +91,27 @@ describe("missing force-months", () => {
       expect(rankedIds.has(id)).toBe(false);
     }
     expect(n.missingIds).toHaveLength(missing.length);
+  });
+});
+
+describe("incomplete force-months", () => {
+  it("are the ones validate.py found", () => {
+    const listed = Object.entries(ds.meta.incomplete).flatMap(([month, entries]) =>
+      entries.map((e) => ({ ...e, month })),
+    );
+    expect(listed).toHaveLength(reference.incomplete.length);
+    for (const ref of reference.incomplete) expect(listed).toContainEqual(ref);
+  });
+
+  it.each(reference.incomplete)("$forceId $month has no rate, rank or change", (ref) => {
+    expect(forceMonth(ds, ref.forceId, ref.month)).toBeNull();
+    expect(national(ds, ref.month).reportingIds).not.toContain(ref.forceId);
+    expect(rankForces(ds, ref.month).some((r) => r.forceId === ref.forceId)).toBe(false);
+    expect(forceChange(ds, ref.forceId, ref.month)).toBeNull();
+    const next = ds.meta.months[ds.meta.months.indexOf(ref.month) + 1];
+    if (next) {
+      expect(forceChange(ds, ref.forceId, next)).toBeNull();
+      expect(monthOverMonth(ds, next)?.forceIds).not.toContain(ref.forceId);
+    }
   });
 });

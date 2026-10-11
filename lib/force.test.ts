@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadDataset } from "@/lib/data";
+import { loadDataset, noDataReason } from "@/lib/data";
 import { buildForceModel, rankDomain } from "@/lib/force";
 import { CITY_OF_LONDON_ID, rankForces } from "@/lib/metrics";
 import { buildOverviewModel } from "@/lib/overview";
@@ -35,12 +35,22 @@ describe("buildForceModel", () => {
       const model = buildForceModel(ds, id);
       const view = model?.byMonth[month];
       expect(view?.standing).toBeNull();
+      expect(view?.noData).toBe(noDataReason(ds, id, month));
       expect(view?.change).toBeNull();
       expect(view?.categories).toBeNull();
       expect(model?.rateSeries[ds.meta.months.indexOf(month)]).toBeNull();
       expect(view?.ranked.some((r) => r.forceId === id)).toBe(false);
     },
   );
+
+  it("gives the reason only for months without figures", () => {
+    const model = buildForceModel(ds, "west-yorkshire");
+    expect(ds.meta.months.every((m) => model?.byMonth[m].noData === null)).toBe(true);
+    expect(buildForceModel(ds, "greater-manchester")?.byMonth[ds.meta.latestMonth].noData).toBe("not-published");
+    for (const [month, entries] of Object.entries(ds.meta.incomplete)) {
+      for (const e of entries) expect(buildForceModel(ds, e.forceId)?.byMonth[month].noData).toBe("incomplete");
+    }
+  });
 
   it("sorts categories largest first and they add up to the force total", () => {
     for (const month of ds.meta.months) {

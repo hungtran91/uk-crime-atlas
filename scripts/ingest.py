@@ -12,6 +12,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import statistics
 import sys
 import urllib.request
 import zipfile
@@ -50,6 +51,8 @@ GEO_OUT_PATH = RAW / "pfa.geojson"
 
 WINDOW = 12
 EXCLUDED_CATEGORIES = ["Anti-social behaviour"]
+# A force-month below this share of the force's median month is a partial upload: treated as missing.
+INCOMPLETE_THRESHOLD = 0.5
 N_FORCES = 43
 
 
@@ -114,7 +117,9 @@ def month_window(names: list[str]) -> list[str]:
     return months
 
 
-def aggregate_crime(lookup: list[dict[str, str]]) -> tuple[list[str], dict[str, list[str]], list[dict]]:
+def aggregate_crime(
+    lookup: list[dict[str, str]],
+) -> tuple[list[str], dict[str, list[str]], dict[str, list[dict]], list[dict]]:
     counts: list[dict] = []
     missing: dict[str, list[str]] = {}
     with zipfile.ZipFile(ARCHIVE_PATH) as zf:
@@ -137,9 +142,32 @@ def aggregate_crime(lookup: list[dict[str, str]]) -> tuple[list[str], dict[str, 
                 for category, n in df.groupby("Crime type").size().items():
                     counts.append({"forceId": fid, "month": month, "category": str(category), "count": int(n)})
             print(f"  {month}: {len(lookup) - len(missing.get(month, []))} forces")
+    incomplete = find_incomplete(counts)
+    for month, entries in incomplete.items():
+        for e in entries:
+            missing.setdefault(month, []).append(e["forceId"])
+            share = e["count"] / e["medianCount"]
+            print(f"  incomplete: {e['forceId']} {month}: {e['count']:,} crimes, {share:.1%} of median month {e['medianCount']:,.1f}")
+    dropped = {(e["forceId"], m) for m, entries in incomplete.items() for e in entries}
+    counts = [r for r in counts if (r["forceId"], r["month"]) not in dropped]
     missing = {m: sorted(ids) for m, ids in sorted(missing.items())}
     counts.sort(key=lambda r: (r["forceId"], r["month"], r["category"]))
-    return months, missing, counts
+    return months, missing, incomplete, counts
+
+
+def find_incomplete(counts: list[dict]) -> dict[str, list[dict]]:
+    """Force-months whose total is below INCOMPLETE_THRESHOLD of that force's median published month."""
+    totals: dict[str, dict[str, int]] = {}
+    for r in counts:
+        by_month = totals.setdefault(r["forceId"], {})
+        by_month[r["month"]] = by_month.get(r["month"], 0) + r["count"]
+    incomplete: dict[str, list[dict]] = {}
+    for fid, by_month in sorted(totals.items()):
+        median = float(statistics.median(by_month.values()))
+        for month, total in by_month.items():
+            if total < INCOMPLETE_THRESHOLD * median:
+                incomplete.setdefault(month, []).append({"forceId": fid, "count": total, "medianCount": median})
+    return dict(sorted(incomplete.items()))
 
 
 def load_population(lookup: list[dict[str, str]]) -> dict[str, int]:
@@ -191,7 +219,7 @@ def main() -> None:
     lookup = load_lookup()
 
     print("2/5 crime counts")
-    months, missing, counts = aggregate_crime(lookup)
+    months, missing, incomplete, counts = aggregate_crime(lookup)
 
     print("3/5 population")
     pop = load_population(lookup)
@@ -211,11 +239,15 @@ def main() -> None:
         "populationYear": POP_YEAR,
         "excludedCategories": EXCLUDED_CATEGORIES,
         "missing": missing,
+        "incompleteThreshold": INCOMPLETE_THRESHOLD,
+        "incomplete": incomplete,
     }
     write_json(OUT / "meta.json", meta)
     write_json(OUT / "forces.json", forces)
     write_json(OUT / "counts.json", counts, one_row_per_line=True)
-    print(f"done: {len(counts)} count rows, {sum(len(v) for v in missing.values())} missing force-months")
+    n_missing = sum(len(v) for v in missing.values())
+    n_incomplete = sum(len(v) for v in incomplete.values())
+    print(f"done: {len(counts)} count rows, {n_missing} missing force-months ({n_incomplete} of them incomplete)")
 
 
 if __name__ == "__main__":

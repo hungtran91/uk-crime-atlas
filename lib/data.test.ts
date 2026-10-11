@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createDataset, forceMonthCounts, hasRows, loadDataset, type CountRow, type Force, type Meta } from "@/lib/data";
+import {
+  createDataset,
+  forceMonthCounts,
+  hasRows,
+  loadDataset,
+  noDataReason,
+  type CountRow,
+  type Force,
+  type Meta,
+} from "@/lib/data";
 
 const meta: Meta = {
   months: ["2026-01", "2026-02"],
@@ -8,6 +17,8 @@ const meta: Meta = {
   populationYear: 2024,
   excludedCategories: ["Anti-social behaviour"],
   missing: { "2026-02": ["b"] },
+  incompleteThreshold: 0.5,
+  incomplete: {},
 };
 const forces: Force[] = [
   { id: "a", name: "A", onsCode: "E1", population: 1000 },
@@ -38,6 +49,18 @@ describe("createDataset", () => {
     expect(() => createDataset(listed, forces, rows)).toThrow(/a 2026-01: listed as missing/);
   });
 
+  it("throws when an incomplete force-month is not listed as missing", () => {
+    const incomplete = { "2026-01": [{ forceId: "a", count: 3, medianCount: 10 }] };
+    expect(() => createDataset({ ...meta, incomplete }, forces, rows)).toThrow(/a 2026-01: incomplete but not listed/);
+  });
+
+  it("tells an incomplete force-month from one that was not published", () => {
+    const partial = { ...meta, incomplete: { "2026-02": [{ forceId: "b", count: 2, medianCount: 10 }] } };
+    expect(noDataReason(createDataset(meta, forces, rows), "b", "2026-02")).toBe("not-published");
+    expect(noDataReason(createDataset(partial, forces, rows), "b", "2026-02")).toBe("incomplete");
+    expect(noDataReason(createDataset(partial, forces, rows), "a", "2026-02")).toBeNull();
+  });
+
   it("throws on unknown forces, unknown months and excluded categories", () => {
     expect(() => createDataset(meta, forces, [...rows, { ...rows[0], forceId: "btp" }])).toThrow(/unknown force/);
     expect(() => createDataset(meta, forces, [...rows, { ...rows[0], month: "2025-12" }])).toThrow(/not in meta/);
@@ -61,6 +84,16 @@ describe("loadDataset (committed data)", () => {
     for (const m of ds.meta.months) {
       const missing = new Set(ds.meta.missing[m] ?? []);
       for (const f of ds.forces) expect(hasRows(ds, f.id, m)).toBe(!missing.has(f.id));
+    }
+  });
+
+  it("lists every incomplete force-month as missing, below the threshold", () => {
+    for (const [m, entries] of Object.entries(ds.meta.incomplete)) {
+      for (const e of entries) {
+        expect(ds.meta.missing[m]).toContain(e.forceId);
+        expect(e.count).toBeLessThan(ds.meta.incompleteThreshold * e.medianCount);
+        expect(noDataReason(ds, e.forceId, m)).toBe("incomplete");
+      }
     }
   });
 });

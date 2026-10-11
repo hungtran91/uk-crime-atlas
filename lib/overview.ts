@@ -1,4 +1,4 @@
-import type { Dataset } from "@/lib/data";
+import { noDataReason, type Dataset, type NoDataReason } from "@/lib/data";
 import { binIndex, highestRate, monthOverMonth, national, nationalRateSeries, rankForces, rate } from "@/lib/metrics";
 
 export interface OverviewForceRow {
@@ -9,6 +9,8 @@ export interface OverviewForceRow {
   of: number | null;
   vsNational: number | null;
   bin: number | null;
+  /** Why there are no figures (not published, or excluded as incomplete); null when there are. */
+  noData: NoDataReason | null;
 }
 
 export interface OverviewCategory {
@@ -25,7 +27,10 @@ export interface OverviewMonth {
   total: number;
   rate: number | null;
   reporting: number;
-  missingNames: string[];
+  /** Forces that published nothing for the month. */
+  notPublishedNames: string[];
+  /** Forces whose month was published but excluded as incomplete. */
+  incompleteNames: string[];
   mom: { prevMonth: string; forces: number; pct: number | null; ratePoints: number | null } | null;
   highest: { forceId: string; name: string; rate: number; vsNational: number | null } | null;
   rows: Record<string, OverviewForceRow>;
@@ -43,7 +48,7 @@ export interface OverviewModel {
   byMonth: Record<string, OverviewMonth>;
 }
 
-const NO_DATA: OverviewForceRow = { rate: null, total: null, rank: null, of: null, vsNational: null, bin: null };
+const NO_FIGURES = { rate: null, total: null, rank: null, of: null, vsNational: null, bin: null };
 
 function buildMonth(ds: Dataset, month: string): OverviewMonth {
   const nat = national(ds, month);
@@ -51,7 +56,9 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
   const top = highestRate(ds, month);
   const name = (id: string) => ds.forceById.get(id)?.name ?? id;
 
-  const rows: Record<string, OverviewForceRow> = Object.fromEntries(ds.forces.map((f) => [f.id, NO_DATA]));
+  const rows: Record<string, OverviewForceRow> = Object.fromEntries(
+    ds.forces.map((f) => [f.id, { ...NO_FIGURES, noData: noDataReason(ds, f.id, month) }]),
+  );
   for (const r of rankForces(ds, month)) {
     rows[r.forceId] = {
       rate: r.rate,
@@ -60,6 +67,7 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
       of: r.of,
       vsNational: nat.rate ? r.rate / nat.rate - 1 : null,
       bin: binIndex(r.rate),
+      noData: null,
     };
   }
 
@@ -80,7 +88,8 @@ function buildMonth(ds: Dataset, month: string): OverviewMonth {
     total: nat.total,
     rate: nat.rate,
     reporting: nat.reporting,
-    missingNames: nat.missingIds.map(name),
+    notPublishedNames: nat.missingIds.filter((id) => rows[id].noData !== "incomplete").map(name),
+    incompleteNames: nat.missingIds.filter((id) => rows[id].noData === "incomplete").map(name),
     mom: mom && { prevMonth: mom.prevMonth, forces: mom.forces, pct: mom.pct, ratePoints: mom.ratePoints },
     highest: top && { forceId: top.forceId, name: name(top.forceId), rate: top.rate, vsNational: top.vsNational },
     rows,

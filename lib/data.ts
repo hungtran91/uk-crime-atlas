@@ -8,8 +8,23 @@ export interface Meta {
   generatedAt: string;
   populationYear: number;
   excludedCategories: string[];
+  /** Force-months with no usable data: not published, or published but incomplete. */
   missing: Record<string, string[]>;
+  /** A force-month below this share of the force's median month is incomplete. */
+  incompleteThreshold: number;
+  /** The subset of `missing` that was published but excluded as incomplete. */
+  incomplete: Record<string, IncompleteMonth[]>;
 }
+
+export interface IncompleteMonth {
+  forceId: string;
+  /** Crimes in the partial upload (not in counts). */
+  count: number;
+  /** The force's median monthly total over its published months. */
+  medianCount: number;
+}
+
+export type NoDataReason = "not-published" | "incomplete";
 
 export interface Force {
   id: string;
@@ -65,6 +80,12 @@ export function createDataset(meta: Meta, forces: Force[], rows: CountRow[]): Da
     }
   }
 
+  for (const [m, entries] of Object.entries(meta.incomplete)) {
+    for (const e of entries) {
+      if (!meta.missing[m]?.includes(e.forceId)) throw new Error(`${e.forceId} ${m}: incomplete but not listed as missing`);
+    }
+  }
+
   return { meta, forces, forceById, categories: [...categories].sort(), counts };
 }
 
@@ -75,6 +96,12 @@ export function forceMonthCounts(ds: Dataset, forceId: string, month: string): R
 
 export function hasRows(ds: Dataset, forceId: string, month: string): boolean {
   return ds.counts.has(key(forceId, month));
+}
+
+/** Why a force-month has no figures, or null when it has data. */
+export function noDataReason(ds: Dataset, forceId: string, month: string): NoDataReason | null {
+  if (hasRows(ds, forceId, month)) return null;
+  return ds.meta.incomplete[month]?.some((e) => e.forceId === forceId) ? "incomplete" : "not-published";
 }
 
 let cached: Dataset | undefined;

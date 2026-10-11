@@ -10,7 +10,7 @@ import TrendChart from "@/components/charts/TrendChart";
 import FilterBar from "@/components/filters/FilterBar";
 import WithMonth from "@/components/WithMonth";
 import type { ForceModel } from "@/lib/force";
-import { fmt, monthLabel } from "@/lib/format";
+import { fmt, monthLabel, noDataLabel } from "@/lib/format";
 import { CITY_OF_LONDON_ID, type RankBand } from "@/lib/metrics";
 import { withMonth } from "@/lib/month";
 
@@ -43,6 +43,8 @@ function ForceView({
   const data = model.byMonth[month];
   const { standing, change, categories } = data;
   const label = monthLabel(month);
+  const incomplete = data.noData === "incomplete";
+  const noData = noDataLabel(data.noData ?? "not-published", month);
   const range = `${monthLabel(model.months[0])} – ${monthLabel(model.latestMonth)}`;
   const href = (path: string) => withMonth(path, month, model.latestMonth);
 
@@ -88,7 +90,7 @@ function ForceView({
           )}
           <div className="kpi-meta">
             {!standing ? (
-              <span>No data published for {label}</span>
+              <span>{noData}</span>
             ) : change ? (
               <>
                 <Delta change={change.ratePoints} text={fmt.change(change.ratePoints)} />
@@ -160,9 +162,11 @@ function ForceView({
             {!categories ? (
               <div className="empty">
                 <span className="nodata-fill" aria-hidden="true" />
-                <span className="empty-t">No data published for {label}</span>
+                <span className="empty-t">{noData}</span>
                 <span className="empty-s">
-                  {force.name} has not published crime data for this month.{" "}
+                  {incomplete
+                    ? `${force.name} published only part of this month's crimes, so it is left out of rates and rankings.`
+                    : `${force.name} has not published crime data for this month.`}{" "}
                   {model.latestAvailable
                     ? `Latest available: ${monthLabel(model.latestAvailable)}.`
                     : `Nothing was published from ${monthLabel(model.months[0])} to ${monthLabel(model.latestMonth)}.`}{" "}
@@ -223,7 +227,11 @@ function ForceView({
               <div className="empty">
                 <span className="nodata-fill" aria-hidden="true" />
                 <span className="empty-t">Not ranked this month</span>
-                <span className="empty-s">Forces without published data are excluded from the national ranking.</span>
+                <span className="empty-s">
+                  {incomplete
+                    ? "Forces with incomplete data are excluded from the national ranking."
+                    : "Forces without published data are excluded from the national ranking."}
+                </span>
               </div>
             )}
           </div>

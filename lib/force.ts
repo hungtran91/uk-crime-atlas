@@ -1,4 +1,4 @@
-import type { Dataset } from "@/lib/data";
+import { noDataReason, type Dataset, type NoDataReason } from "@/lib/data";
 import {
   CITY_OF_LONDON_ID,
   forceCategories,
@@ -21,7 +21,9 @@ export interface RankDot {
 
 export interface ForceMonthView {
   month: string;
-  /** Null when the force published no data for the month. */
+  /** Why the month has no figures (not published, or excluded as incomplete); null when it has data. */
+  noData: NoDataReason | null;
+  /** Null when the force has no data for the month. */
   standing: ForceStanding | null;
   change: ForceChange | null;
   /** Largest first; null when the force published no data. */
@@ -68,6 +70,7 @@ function buildMonth(ds: Dataset, forceId: string, month: string): ForceMonthView
   const categories = forceCategories(ds, forceId, month);
   return {
     month,
+    noData: noDataReason(ds, forceId, month),
     standing: forceStanding(ds, forceId, month),
     change: forceChange(ds, forceId, month),
     categories:

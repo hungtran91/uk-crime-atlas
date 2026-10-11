@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fmt, monthLabel, monthShort, rankLabel } from "@/lib/format";
+import { fmt, monthLabel, monthShort, noDataLabel, rankLabel } from "@/lib/format";
 
 describe("fmt", () => {
   it("formats ordinals", () => {
@@ -51,5 +51,10 @@ describe("labels", () => {
     expect(monthLabel("2026-07")).toBe("Jul 2026");
     expect(monthLabel("2025-09")).toBe("Sep 2025");
     expect(monthShort("2025-12")).toBe("Dec");
+  });
+
+  it("words a month without figures by reason", () => {
+    expect(noDataLabel("not-published", "2026-01")).toBe("No data published for Jan 2026");
+    expect(noDataLabel("incomplete", "2026-01")).toBe("Incomplete data for Jan 2026 — excluded");
   });
 });

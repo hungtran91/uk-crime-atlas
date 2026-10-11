@@ -14,7 +14,7 @@
     "2026-07"
   ],
   "latestMonth": "2026-07",
-  "generatedAt": "2026-10-08T14:53:04Z",
+  "generatedAt": "2026-10-11T03:31:37Z",
   "populationYear": 2024,
   "excludedCategories": [
     "Anti-social behaviour"
@@ -36,7 +36,8 @@
       "greater-manchester"
     ],
     "2026-01": [
-      "greater-manchester"
+      "greater-manchester",
+      "northumbria"
     ],
     "2026-02": [
       "gloucestershire",
@@ -62,6 +63,16 @@
       "gloucestershire",
       "greater-manchester",
       "north-yorkshire"
+    ]
+  },
+  "incompleteThreshold": 0.5,
+  "incomplete": {
+    "2026-01": [
+      {
+        "forceId": "northumbria",
+        "count": 2719,
+        "medianCount": 11003.5
+      }
     ]
   }
 }

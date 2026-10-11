@@ -11,6 +11,7 @@ import argparse
 import csv
 import io
 import json
+import statistics
 import sys
 import zipfile
 from collections import Counter, defaultdict
@@ -27,6 +28,7 @@ N_FORCES = 43
 N_MONTHS = 12
 EW_POPULATION_2024 = 61_806_682
 RATE_RANGE = (6.0, 10.0)
+INCOMPLETE_THRESHOLD = 0.5
 TOPO_MAX_BYTES = 1_000_000
 BANNED_STRINGS = ["Anti-social behaviour", "btp", "northern-ireland", "British Transport", "Northern Ireland", "PSNI"]
 
@@ -72,6 +74,42 @@ def check_meta(meta: dict, force_ids: set[str]) -> None:
     for m, ids in meta["missing"].items():
         check(m in months, f"meta.missing: month {m} not in months")
         check(set(ids) <= force_ids, f"meta.missing[{m}]: unknown forces {sorted(set(ids) - force_ids)}")
+    threshold = meta["incompleteThreshold"]
+    check(threshold == INCOMPLETE_THRESHOLD, f"meta.incompleteThreshold: {threshold!r}, expected {INCOMPLETE_THRESHOLD}")
+    for m, entries in meta["incomplete"].items():
+        check(m in months, f"meta.incomplete: month {m} not in months")
+        ids = [e["forceId"] for e in entries]
+        check(len(set(ids)) == len(ids), f"meta.incomplete[{m}]: duplicate forces")
+        for e in entries:
+            fid = e["forceId"]
+            check(fid in meta["missing"].get(m, []), f"meta.incomplete[{m}]: {fid} not listed in meta.missing")
+            check(isinstance(e["count"], int) and e["count"] > 0, f"meta.incomplete[{m}]: {fid} has bad count {e['count']!r}")
+            check(e["count"] < threshold * e["medianCount"], f"meta.incomplete[{m}]: {fid} is not below the threshold")
+
+
+def check_incomplete(counts: list[dict], meta: dict) -> list[dict]:
+    """Recomputes the incomplete rule from the published totals; the flagged set must equal meta.incomplete."""
+    totals: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for r in counts:
+        totals[r["forceId"]][r["month"]] += r["count"]
+    listed: dict[tuple[str, str], dict] = {}
+    for m, entries in meta["incomplete"].items():
+        for e in entries:
+            listed[(e["forceId"], m)] = e
+            # Excluded rows are not in counts.json, but they still count towards the force's median.
+            totals[e["forceId"]][m] += e["count"]
+    flagged: set[tuple[str, str]] = set()
+    for fid, by_month in totals.items():
+        median = float(statistics.median(by_month.values()))
+        for m, total in by_month.items():
+            if total < meta["incompleteThreshold"] * median:
+                flagged.add((fid, m))
+                entry = listed.get((fid, m))
+                if entry is not None:
+                    check(entry["medianCount"] == median, f"meta.incomplete: {fid} {m} medianCount {entry['medianCount']} != {median}")
+    check(flagged == set(listed), f"incomplete force-months differ from meta.incomplete: {sorted(flagged ^ set(listed))}")
+    rows = [{"forceId": f, "month": m, "count": e["count"], "medianCount": e["medianCount"]} for (f, m), e in listed.items()]
+    return sorted(rows, key=lambda r: (r["month"], r["forceId"]))
 
 
 def check_counts(counts: list[dict], meta: dict, force_ids: set[str]) -> None:
@@ -216,6 +254,16 @@ def spot(force: str, month: str) -> int:
         with zf.open(member) as fh:
             raw = Counter(r["Crime type"] for r in csv.DictReader(io.TextIOWrapper(fh, encoding="utf-8")))
     print(f"{member}  ({archives[-1].name})")
+    excluded = next((e for e in load("meta.json")["incomplete"].get(month, []) if e["forceId"] == force), None)
+    if excluded is not None:
+        total_raw = sum(n for c, n in raw.items() if c != "Anti-social behaviour")
+        share = excluded["count"] / excluded["medianCount"]
+        print(f"excluded as incomplete: {share:.1%} of the force's median month ({excluded['medianCount']:,.1f})")
+        print(f"{'TOTAL excl. ASB':32} {'raw CSV':>8} {'meta.json':>12}")
+        print(f"{'':32} {total_raw:>8} {excluded['count']:>12}")
+        if agg:
+            print("MISMATCH: counts.json has rows for an incomplete force-month")
+        return 0 if total_raw == excluded["count"] and not agg else 1
     print(f"{'category':32} {'raw CSV':>8} {'counts.json':>12}")
     ok = True
     for cat in sorted(set(raw) | set(agg)):
@@ -243,11 +291,18 @@ def main() -> int:
     check_meta(meta, force_ids)
     check_counts(counts, meta, force_ids)
     check_banned_strings()
+    incomplete = check_incomplete(counts, meta)
     reference = check_rates(counts, meta, forces)
+    reference["incomplete"] = incomplete
     check_topo(force_ids)
 
-    missing = sum(len(v) for v in meta["missing"].values())
-    print(f"Missing force-months: {missing} " + json.dumps({m: v for m, v in meta["missing"].items()}))
+    flagged = {(r["forceId"], r["month"]) for r in incomplete}
+    not_published = {m: [f for f in ids if (f, m) not in flagged] for m, ids in meta["missing"].items()}
+    not_published = {m: ids for m, ids in not_published.items() if ids}
+    print(f"Not published: {sum(len(v) for v in not_published.values())} force-months " + json.dumps(not_published))
+    print(f"Incomplete (below {meta['incompleteThreshold']:.0%} of the force's median month): {len(incomplete)} force-months")
+    for r in incomplete:
+        print(f"  {r['forceId']} {r['month']}: {r['count']:,} crimes, {r['count'] / r['medianCount']:.1%} of median {r['medianCount']:,.1f}")
     if errors:
         print(f"\nFAILED ({len(errors)}):", file=sys.stderr)
         for e in errors:

@@ -38,6 +38,13 @@ export function rankLabel(rank: number, of: number): string {
   return `${fmt.ordinal(rank)} of ${of} reporting`;
 }
 
+/** Text for a force-month with no figures. `month` is "YYYY-MM". */
+export function noDataLabel(reason: "not-published" | "incomplete", month: string): string {
+  return reason === "incomplete"
+    ? `Incomplete data for ${monthLabel(month)} — excluded`
+    : `No data published for ${monthLabel(month)}`;
+}
+
 // Fixed names rather than toLocaleDateString: ICU versions differ ("Sep" vs "Sept"),
 // which would make server and client render different text.
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

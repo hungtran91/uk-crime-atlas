@@ -26,6 +26,8 @@ const meta: Meta = {
   populationYear: 2024,
   excludedCategories: ["Anti-social behaviour"],
   missing: { "2026-02": ["b"] },
+  incompleteThreshold: 0.5,
+  incomplete: {},
 };
 const forces: Force[] = [
   { id: "a", name: "A", onsCode: "E1", population: 1000 },

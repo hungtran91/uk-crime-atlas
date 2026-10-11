@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useState, type FocusEvent, type MouseEvent } from "react";
 import Tooltip from "@/components/map/Tooltip";
-import { fmt, monthLabel, rankLabel } from "@/lib/format";
+import { fmt, monthLabel, noDataLabel, rankLabel } from "@/lib/format";
 import type { MapArea, MapGeometry } from "@/lib/geo";
 import { withMonth } from "@/lib/month";
 import type { OverviewForceRow } from "@/lib/overview";
@@ -87,7 +87,7 @@ export default function ChoroplethMap({ geometry, month, latestMonth, rows, name
             <div className="tt-title">{names[active.id]}</div>
             {row.rate === null ? (
               <div className="tt-row">
-                <span>No data published for {monthLabel(month)}</span>
+                <span>{noDataLabel(row.noData ?? "not-published", month)}</span>
               </div>
             ) : (
               <>

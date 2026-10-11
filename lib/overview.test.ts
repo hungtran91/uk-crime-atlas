@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadDataset } from "@/lib/data";
+import { loadDataset, noDataReason } from "@/lib/data";
 import { loadMapGeometry, METROPOLITAN_ID } from "@/lib/geo";
 import { CITY_OF_LONDON_ID, highestRate, monthOverMonth, national, rankForces } from "@/lib/metrics";
 import { buildOverviewModel } from "@/lib/overview";
@@ -25,7 +25,10 @@ describe("buildOverviewModel", () => {
     expect(o.total).toBe(nat.total);
     expect(o.rate).toBe(nat.rate);
     expect(o.reporting).toBe(nat.reporting);
-    expect(o.missingNames).toHaveLength(ds.forces.length - nat.reporting);
+    expect(o.notPublishedNames.length + o.incompleteNames.length).toBe(ds.forces.length - nat.reporting);
+    expect(o.incompleteNames).toEqual(
+      (ds.meta.incomplete[month] ?? []).map((e) => ds.forceById.get(e.forceId)?.name),
+    );
     expect(o.mom?.pct ?? null).toBe(mom?.pct ?? null);
     expect(o.mom?.ratePoints ?? null).toBe(mom?.ratePoints ?? null);
     expect(o.highest?.forceId).toBe(highestRate(ds, month)?.forceId);
@@ -35,7 +38,15 @@ describe("buildOverviewModel", () => {
       expect(o.rows[r.forceId]).toMatchObject({ rate: r.rate, rank: r.rank, of: nat.reporting });
     }
     for (const id of nat.missingIds) {
-      expect(o.rows[id]).toEqual({ rate: null, total: null, rank: null, of: null, vsNational: null, bin: null });
+      expect(o.rows[id]).toEqual({
+        rate: null,
+        total: null,
+        rank: null,
+        of: null,
+        vsNational: null,
+        bin: null,
+        noData: noDataReason(ds, id, month),
+      });
     }
   });
 
