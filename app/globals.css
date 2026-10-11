@@ -1,0 +1,124 @@
+/* Tokens and base styles ported from design/ds/atlas-ds.css. */
+
+[data-theme="dark"] {
+  --bg: oklch(0.165 0.004 260);
+  --surface: oklch(0.205 0.005 260);
+  --surface-2: oklch(0.245 0.006 260);
+  --surface-hover: oklch(0.27 0.006 260);
+  --border: oklch(0.29 0.006 260);
+  --border-strong: oklch(0.38 0.008 260);
+  --grid: oklch(0.27 0.005 260);
+  --text: oklch(0.955 0.003 260);
+  --text-2: oklch(0.76 0.008 260);
+  --text-3: oklch(0.62 0.01 260);
+  --accent: oklch(0.72 0.13 250);
+  --accent-soft: oklch(0.72 0.13 250 / 0.16);
+  --on-accent: oklch(0.17 0.01 260);
+  --pos: oklch(0.74 0.14 155);
+  --neg: oklch(0.72 0.15 25);
+  --pos-soft: oklch(0.74 0.14 155 / 0.14);
+  --neg-soft: oklch(0.72 0.15 25 / 0.14);
+  --nodata: oklch(0.32 0.004 260);
+  --nodata-stripe: oklch(0.40 0.004 260);
+  --seq-1: oklch(0.31 0.07 285); --seq-2: oklch(0.39 0.09 272); --seq-3: oklch(0.48 0.10 250);
+  --seq-4: oklch(0.57 0.10 222); --seq-5: oklch(0.67 0.11 190); --seq-6: oklch(0.77 0.13 150); --seq-7: oklch(0.87 0.15 108);
+  --cat-1: oklch(0.72 0.13 250); --cat-2: oklch(0.72 0.13 55); --cat-3: oklch(0.72 0.13 160); --cat-4: oklch(0.72 0.13 330);
+  --cat-5: oklch(0.72 0.13 95); --cat-6: oklch(0.72 0.13 205); --cat-7: oklch(0.72 0.13 295); --cat-8: oklch(0.72 0.13 20);
+  --shadow: 0 8px 24px oklch(0 0 0 / 0.45), 0 0 0 1px var(--border-strong);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: oklch(0.975 0.002 260);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.003 260);
+  --surface-hover: oklch(0.945 0.004 260);
+  --border: oklch(0.905 0.004 260);
+  --border-strong: oklch(0.82 0.006 260);
+  --grid: oklch(0.93 0.003 260);
+  --text: oklch(0.21 0.006 260);
+  --text-2: oklch(0.43 0.01 260);
+  --text-3: oklch(0.54 0.01 260);
+  --accent: oklch(0.52 0.15 255);
+  --accent-soft: oklch(0.52 0.15 255 / 0.10);
+  --on-accent: oklch(1 0 0);
+  --pos: oklch(0.52 0.13 155);
+  --neg: oklch(0.54 0.17 25);
+  --pos-soft: oklch(0.52 0.13 155 / 0.10);
+  --neg-soft: oklch(0.54 0.17 25 / 0.10);
+  --nodata: oklch(0.90 0.003 260);
+  --nodata-stripe: oklch(0.82 0.004 260);
+  --seq-1: oklch(0.955 0.05 108); --seq-2: oklch(0.88 0.09 145); --seq-3: oklch(0.78 0.10 178);
+  --seq-4: oklch(0.67 0.10 212); --seq-5: oklch(0.56 0.11 242); --seq-6: oklch(0.46 0.11 266); --seq-7: oklch(0.37 0.10 285);
+  --cat-1: oklch(0.58 0.14 250); --cat-2: oklch(0.62 0.14 55); --cat-3: oklch(0.58 0.12 160); --cat-4: oklch(0.58 0.14 330);
+  --cat-5: oklch(0.62 0.12 95); --cat-6: oklch(0.60 0.11 205); --cat-7: oklch(0.56 0.14 295); --cat-8: oklch(0.58 0.15 20);
+  --shadow: 0 8px 24px oklch(0.2 0.01 260 / 0.14), 0 0 0 1px var(--border);
+  color-scheme: light;
+}
+
+/* --font-geist-* are the self-hosted family names emitted by next/font. */
+[data-theme] {
+  --font: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --mono: var(--font-geist-mono), ui-monospace, monospace;
+  --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-lg: 15px; --fs-xl: 20px; --fs-2xl: 28px;
+  --r-sm: 4px; --r-md: 6px; --r-lg: 8px;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px;
+  background: var(--bg); color: var(--text);
+  font: 400 var(--fs-md)/1.45 var(--font);
+  font-feature-settings: 'tnum' 1, 'ss01' 1;
+  -webkit-font-smoothing: antialiased;
+}
+[data-theme] *, [data-theme] *::before, [data-theme] *::after { box-sizing: border-box; }
+[data-theme] a { color: var(--accent); text-decoration: none; }
+[data-theme] a:hover { text-decoration: underline; }
+[data-theme] :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+html, body { margin: 0; min-height: 100%; }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); }
+.muted { color: var(--text-2); }
+.subtle { color: var(--text-3); }
+.h1 { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.h2 { font-size: var(--fs-md); font-weight: 600; margin: 0; }
+.caption { font-size: var(--fs-xs); color: var(--text-3); }
+
+/* App bar */
+.app-bar { display: flex; align-items: center; gap: var(--s-6); height: 48px; padding: 0 var(--s-5); border-bottom: 1px solid var(--border); background: var(--surface); }
+.brand { display: flex; align-items: center; gap: var(--s-2); font-weight: 600; font-size: var(--fs-md); white-space: nowrap; }
+[data-theme] a.brand { color: var(--text); text-decoration: none; }
+.brand-mark { width: 14px; height: 14px; border-radius: 3px; background: linear-gradient(135deg, var(--seq-3), var(--seq-6)); }
+.app-bar .spacer { flex: 1; }
+
+/* Nav tabs (links; active state via aria-current) */
+.tabs { display: flex; gap: var(--s-1); align-self: stretch; }
+[data-theme] a.tab { display: flex; align-items: center; padding: 0 var(--s-3); color: var(--text-2); font-weight: 500; text-decoration: none; box-shadow: inset 0 -2px 0 transparent; }
+[data-theme] a.tab:hover { color: var(--text); }
+[data-theme] a.tab[aria-current="page"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* Segmented control */
+.seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: calc(var(--r-sm) + 2px); }
+.seg button { height: 22px; padding: 0 10px; white-space: nowrap; border: 0; background: none; color: var(--text-2); cursor: pointer; font: 500 var(--fs-sm)/1 var(--font); border-radius: var(--r-sm); }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border-strong); }
+[data-theme="light"] .seg button[aria-pressed="true"] { box-shadow: 0 1px 2px oklch(0 0 0 / .08), 0 0 0 1px var(--border); }
+
+/* Page layout (from design/UK Crime Atlas.html) */
+main { flex: 1; }
+.page { max-width: 1480px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.page-h { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 4px 0 4px; }
+.crumb { font-size: var(--fs-sm); color: var(--text-3); display: flex; gap: 6px; margin-bottom: 4px; }
+.page-sub { margin: 4px 0 0; }
+
+/* Footer */
+.app-footer { border-top: 1px solid var(--border); background: var(--surface); }
+.app-footer .page { padding-top: var(--s-3); padding-bottom: var(--s-3); }
+.app-footer p { margin: 0; }
+
+/* States */
+.nodata-fill { background: repeating-linear-gradient(135deg, var(--nodata) 0 3px, var(--nodata-stripe) 3px 4.5px); }
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: var(--s-6); color: var(--text-2); min-height: 160px; border: 1px dashed var(--border-strong); border-radius: var(--r-md); }
+.empty .empty-t { color: var(--text); font-weight: 500; }
+.empty .empty-s { font-size: var(--fs-sm); max-width: 320px; text-wrap: pretty; }
+.empty .nodata-fill { width: 28px; height: 28px; border-radius: var(--r-sm); margin-bottom: 4px; }
