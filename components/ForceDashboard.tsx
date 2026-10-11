@@ -130,6 +130,7 @@ function ForceView({
           </div>
           <div />
           <div className="kpi-meta">
+            {!standing && <span>{noData}</span>}
             {standing && standing.vsNational !== null && data.nationalRate !== null && (
               <>
                 <Delta change={standing.vsNational} text={standing.vsNational > 0 ? "Above" : "Below"} />
