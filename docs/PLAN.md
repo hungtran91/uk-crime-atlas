@@ -5,31 +5,31 @@
 - Port tokens from design/ds/atlas-ds.css; Geist fonts; light/dark toggle
 - App shell: header tabs, 3 routes with placeholders, footer attribution
 Acceptance:
-- [ ] npm run dev shows the shell; theme toggle matches design in both modes
-- [ ] build, lint, test (one trivial test) pass
-- [ ] git diff shows no changes inside design/
+- [x] npm run dev shows the shell; theme toggle matches design in both modes
+- [x] build, lint, test (one trivial test) pass
+- [x] git diff shows no changes inside design/
 
 ## Phase 2: Data pipeline
 - scripts/force_lookup.csv: data.police.uk name ↔ ONS code ↔ slug (43 rows)
 - ingest.py: 12 months of crime CSVs, population xlsx, boundaries → TopoJSON
 - validate.py implements the checks below
 Acceptance:
-- [ ] forces.json: 43 forces, all with population
-- [ ] meta.months: 12 consecutive months
-- [ ] no ASB, BTP or PSNI anywhere in outputs
-- [ ] missing force-months listed in meta (may be empty)
-- [ ] national monthly rate per 1,000 is plausible (roughly 6–10)
-- [ ] pfa.topo.json: 43 features, ids match forces.json, file < 1 MB
-- [ ] I spot-check one force-month count against its raw CSV
+- [x] forces.json: 43 forces, all with population
+- [x] meta.months: 12 consecutive months
+- [x] no ASB, BTP or PSNI anywhere in outputs
+- [x] missing force-months listed in meta (may be empty)
+- [x] national monthly rate per 1,000 is plausible (roughly 6–10)
+- [x] pfa.topo.json: 43 features, ids match forces.json, file < 1 MB
+- [x] I spot-check one force-month count against its raw CSV
 
 ## Phase 3: National overview
 - d3-geo choropleth + London inset + legend + tooltip; click → force page
 - Filter bar (month, go-to-force); 3 KPI cards with sparklines; top categories chart
 - lib/metrics.ts with Vitest tests (rate, delta, rank, null handling)
 Acceptance:
-- [ ] matches "design/UK Crime Atlas.html" overview in both themes
-- [ ] changing month updates map, KPIs and chart
-- [ ] a missing force renders as grey "no data"
+- [x] matches "design/UK Crime Atlas.html" overview in both themes
+- [x] changing month updates map, KPIs and chart
+- [x] a missing force renders as grey "no data"
 
 ## Phase 4: Force detail + methodology
 - Category breakdown with national-average ticks + Chart/Table toggle

@@ -5,6 +5,47 @@ Portfolio dashboard of police-recorded crime for the 43 territorial forces of
 England & Wales: national choropleth + force detail, rates per 1,000 residents.
 Public GitHub repo, deployed on Vercel Hobby.
 
+## Current status (updated 2026-11-04)
+- SHIPPED. Phases 1–5 in docs/PLAN.md are complete; every acceptance check passed.
+  Live: https://uk-crime-atlas.vercel.app/ (Vercel deploys main automatically on push).
+  Repo is public (MIT code, OGL v3.0 data). 202 Vitest tests pass.
+- Data window: Aug 2025 – Jul 2026, from the pinned archive data/raw/2026-07.zip
+  (ARCHIVE_MONTH / ARCHIVE_SIZE constants in scripts/ingest.py). Newer archives exist.
+- Half-done: nothing. There is no work in progress and no open branch.
+- No phase is approved beyond Phase 5. Any new work needs a plan and my approval first.
+
+## Known issues and limits (none block the live site)
+- Overview mobile performance is 91 on PageSpeed Insights, so there is little headroom over 90.
+  The overview HTML (~730 KB raw) carries all 12 months. If it drops below 90, ship one month
+  and load the others on demand. That is a design change, so plan it with me first.
+- Force page accessibility is 96: the rank-plot dots are small, overlapping tap targets
+  (by design). The force dropdown does the same job.
+- A deep link to a non-latest month (?month=…) paints the latest month briefly, then switches,
+  because static pages cannot read search params on the server.
+- Nav links, the breadcrumb and the highest-rate link have prefetch off (keeps the overview payload
+  from loading on every page), so the first click is slightly slower.
+- npm audit: 0 production warnings; 5 high dev-only warnings (braces chain under
+  eslint-config-next, no fixed version). Never run `npm audit fix --force`; it downgrades
+  eslint-config-next and breaks linting.
+- Data caveats, all explained on /methodology: Greater Manchester published nothing in the window
+  (the data.police.uk changelog gives no reason); Northumbria Jan 2026 is excluded as incomplete;
+  Northumbria Feb 2026 (70% of its median) is kept but listed as "low but kept"; rates are not
+  adjusted for days in the month.
+- Claude in Chrome's window is hidden on the dev machine, so resize and layout checks must use
+  headless Chrome. Claude in Chrome is fine for clicking through pages and reading the console.
+- Screenshots in docs/screenshots/ are the README's; retake all five if the UI changes visibly.
+
+## Working in a cloud session (Linux, no data/raw)
+- `npm ci`, `npm test` and `npm run lint` work. `npm run build` FAILS in the sandbox because
+  next/font cannot reach fonts.googleapis.com. That is a network limit, not a bug (Vercel builds
+  fine), so don't "fix" it by changing the fonts. Rely on test + lint here and check the Vercel build.
+- The sandbox may have a different Node version than engines (24.x). Tests still pass.
+- `python3 scripts/validate.py` works without data/raw (it only reads data/ and public/geo/).
+  `ingest.py`, `npm run geo` and `validate.py --spot` need data/raw/, which only exists on my
+  laptop (the archive is 1.6 GB), so data refreshes are done locally.
+- Linux equivalents of the Windows commands below: `.venv/bin/python` instead of
+  `.venv\Scripts\python`, and `python3 -m venv .venv` instead of `py -3.14 -m venv .venv`.
+
 ## Stack (locked; ask before changing)
 - Next.js latest stable, App Router, TypeScript strict, fully static pages
 - Map: d3-geo + topojson-client rendering SVG. No Leaflet, no map tiles.
@@ -70,6 +111,10 @@ npm run geo                                     # data/raw/pfa.geojson → publi
 .venv\Scripts\python scripts\validate.py --spot kent 2026-06   # compare one force-month with its raw CSV
 Never call bare `python` (two versions installed). Process CSVs file by file.
 
+Refresh to a newer archive (local only): set ARCHIVE_MONTH and ARCHIVE_SIZE in scripts/ingest.py,
+download the zip to data/raw/, run ingest.py → npm run geo → validate.py → npm test, check the
+"incomplete" list it prints, then commit data/ and public/geo/ together.
+
 ## Conventions
 - Match design/ screens: layout, tokens, loading/empty/no-data states
 - Light + dark via data-theme, dark default
@@ -83,7 +128,8 @@ Never call bare `python` (two versions installed). Process CSVs file by file.
 - Report: what changed, how I verify it, anything skipped
 
 ## Don'ts
-- Don't start the next phase without my approval
+- Don't start the next phase (or any new work) without my approval
+- Don't push to main without asking; main deploys straight to the live site
 - Don't import design/data/*; don't hardcode numbers from the mock
 - Don't add dependencies not listed here without asking
 - Don't commit data/raw or any file > 5 MB
