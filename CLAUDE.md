@@ -5,14 +5,16 @@ Portfolio dashboard of police-recorded crime for the 43 territorial forces of
 England & Wales: national choropleth + force detail, rates per 1,000 residents.
 Public GitHub repo, deployed on Vercel Hobby.
 
-## Current status (updated 2026-11-04)
+## Current status (updated 2026-11-14)
 - SHIPPED. Phases 1–5 in docs/PLAN.md are complete; every acceptance check passed.
   Live: https://uk-crime-atlas.vercel.app/ (Vercel deploys main automatically on push).
-  Repo is public (MIT code, OGL v3.0 data). 202 Vitest tests pass.
+  Repo is public (MIT code, OGL v3.0 data). 202 Vitest tests and 42 pytest tests pass.
+- Phase 6 (maintenance) is approved and built on branch chore/stage-6-maintenance: CI,
+  Dependabot, the consistency test and the rules below. Its acceptance checks in docs/PLAN.md
+  are open until the PR is merged and the repo settings are done.
 - Data window: Aug 2025 – Jul 2026, from the pinned archive data/raw/2026-07.zip
   (ARCHIVE_MONTH / ARCHIVE_SIZE constants in scripts/ingest.py). Newer archives exist.
-- Half-done: nothing. There is no work in progress and no open branch.
-- No phase is approved beyond Phase 5. Any new work needs a plan and my approval first.
+- No phase is approved beyond Phase 6. Any new work needs a plan and my approval first.
 
 ## Known issues and limits (none block the live site)
 - Overview mobile performance is 91 on PageSpeed Insights, so there is little headroom over 90.
@@ -35,7 +37,66 @@ Public GitHub repo, deployed on Vercel Hobby.
   headless Chrome. Claude in Chrome is fine for clicking through pages and reading the console.
 - Screenshots in docs/screenshots/ are the README's; retake all five if the UI changes visibly.
 
+## Maintenance
+- What runs by itself: Dependabot (Mondays: npm, pip, github-actions), CI on every pull request
+  (.github/workflows/ci.yml: npm ci, npm test, npm run lint, pytest; no next build), a Vercel
+  preview per PR, and one routine (the new-archive check below).
+- Reviewing a Dependabot PR, in this order:
+  1. CI jobs web and python are green.
+  2. Open the PR's Vercel preview and check the overview and one force page (map, charts, both
+     themes). CI cannot see visuals.
+  3. Merge. Close it instead if next and eslint-config-next end up on different versions, or if
+     any version goes down.
+- Majors come as single PRs (except the next and react groups). A major of anything in the locked
+  stack needs my approval before merging, and auto-fix is never used on a major.
+- Re-measure PageSpeed on the overview after any next, react or recharts bump (it is at 91).
+- Data refreshes stay local (see "Refresh to a newer archive" under Commands).
+- scripts/tests/test_repo_consistency.py fails when ARCHIVE_MONTH in scripts/ingest.py differs from
+  latestMonth in data/meta.json, so an archive bump without the data refresh cannot pass CI.
+
+### Routine: new-archive check
+Runs monthly in the cloud. Steps:
+1. Read ARCHIVE_MONTH in scripts/ingest.py. For each later month up to the current one, send a
+   HEAD request to https://policeuk-data.s3.amazonaws.com/archive/YYYY-MM.zip.
+2. If none exists, or a claude/data-refresh-<month> branch already exists for the newest one,
+   change nothing and end with the report.
+3. Otherwise, on branch claude/data-refresh-<newest month>, set ARCHIVE_MONTH and ARCHIVE_SIZE
+   (the Content-Length) in scripts/ingest.py, and nothing else. Open a draft PR whose report
+   lists the local refresh steps as a checklist. Then stop; never return to that branch.
+- Its python check is red on purpose (the consistency test) until I refresh the data locally,
+  and the ruleset on main blocks merging it early. Say so in the report.
+- Only I push the refreshed data/ and public/geo/ to the claude/data-refresh-<month> branch, and
+  only after the routine's run has finished. Never while a cloud session is on that branch.
+- Never turn on auto-fix for a claude/data-refresh-* PR; its red python check is expected until I
+  refresh data locally.
+
 ## Working in a cloud session (Linux, no data/raw)
+These rules apply to every cloud session, routine run and auto-fix run:
+- Work on a claude/<topic> branch and end by opening one draft PR against main. Auto-fix pushes
+  only to the branch of the PR it watches.
+- Never push to main, merge, mark a PR ready for review, force-push or delete a branch.
+- No new dependencies, no edits under data/ or public/geo/, never `npm audit fix --force`.
+- If there is nothing to change, open no PR and end with the report as the final message.
+- The PR body (or that final message) is this report, with these headings in this order:
+
+```
+## Report
+**Trigger:** <routine name | manual cloud session | auto-fix>, <YYYY-MM-DD>
+### What changed
+### Checks
+| Check | Result |
+| --- | --- |
+| npm test | |
+| npm run lint | |
+| pytest | |
+| python3 scripts/validate.py | |
+| npm run build | not run (cloud) |
+### Skipped or failed
+### Decisions and assumptions
+### Verify locally
+```
+
+Environment notes:
 - `npm ci`, `npm test` and `npm run lint` work. `npm run build` FAILS in the sandbox because
   next/font cannot reach fonts.googleapis.com. That is a network limit, not a bug (Vercel builds
   fine), so don't "fix" it by changing the fonts. Rely on test + lint here and check the Vercel build.
@@ -62,8 +123,10 @@ lib/           data loading + metrics (rates, deltas, ranks), pure + tested
 data/          generated JSON (committed)
 data/raw/      downloaded CSV/XLSX (gitignored)
 public/geo/    pfa.topo.json (committed)
-scripts/       ingest.py, validate.py, force_lookup.csv; tests/ (pytest, synthetic fixtures)
+scripts/       ingest.py, validate.py, force_lookup.csv; tests/ (pytest: synthetic fixtures,
+               plus one check that ARCHIVE_MONTH matches the committed data)
 docs/PLAN.md   phases + acceptance checks
+.github/       ci.yml (checks on PRs), dependabot.yml
 
 ## Data sources (Open Government Licence v3.0; attribute in footer + /methodology)
 - Crime: data.police.uk monthly street-level CSVs, latest 12 available months
@@ -131,7 +194,8 @@ download the zip to data/raw/, run ingest.py → npm run geo → validate.py →
 
 ## Don'ts
 - Don't start the next phase (or any new work) without my approval
-- Don't push to main without asking; main deploys straight to the live site
+- Don't push to main; every change goes through a PR (main deploys straight to the live site,
+  and a ruleset on main enforces this once it is set up)
 - Don't import design/data/*; don't hardcode numbers from the mock
 - Don't add dependencies not listed here without asking
 - Don't commit data/raw or any file > 5 MB
