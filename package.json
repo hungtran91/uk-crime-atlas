@@ -33,6 +33,6 @@
     "eslint-config-next": "16.4.5",
     "mapshaper": "0.7.83",
     "typescript": "^5",
-    "vitest": "^5.0.2"
+    "vitest": "^5.1.0"
   }
 }
