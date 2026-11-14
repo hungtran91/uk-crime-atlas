@@ -70,3 +70,28 @@ Performance result (PageSpeed Insights, pagespeed.web.dev, on https://uk-crime-a
   PageSpeed Insights figures above are the ones of record.
 - Overview mobile performance (91) has little headroom over the ≥ 90 threshold: re-measure after
   any change that adds weight to the overview page.
+
+## Phase 6: Maintenance
+- CI on pull requests (.github/workflows/ci.yml): npm ci, npm test, npm run lint, pytest.
+  No next build (Vercel builds every PR preview).
+- Dependabot (.github/dependabot.yml): npm, pip and github-actions, weekly on Monday, grouped,
+  small PR limits; next and eslint-config-next always move together.
+- pytest consistency test: scripts/ingest.py ARCHIVE_MONTH must equal latestMonth in
+  data/meta.json, so an archive bump without a data refresh stays red.
+- CLAUDE.md: Maintenance section, cloud rules (draft PR with a fixed report, never push to
+  main), the new-archive routine. docs/STATUS.md removed (the PR body is the run log).
+- Settings outside the repo (by hand): Claude GitHub App, Dependabot alerts and security
+  updates, ruleset on main, the routine.
+Acceptance:
+- [ ] CI jobs web and python are green on the Stage 6 PR (202 Vitest, 0 lint errors, 42 pytest)
+- [ ] changing ARCHIVE_MONTH by hand makes the consistency test fail with a clear message
+- [ ] Dependabot parses npm, pip and github-actions with no config error
+- [ ] first Dependabot run: at most 3 npm, 2 pip and 1 actions PR; next and eslint-config-next in
+      the same PR; no version goes down
+- [ ] Vercel builds a preview on a Dependabot PR
+- [ ] routine "Run now" ends with a draft PR in the fixed report shape, or a "nothing newer"
+      report; main untouched
+- [ ] on the routine's draft PR the python check is red and the ruleset blocks the merge; it
+      turns green after the local data refresh is pushed to the branch
+- [ ] with the ruleset on, a direct git push to main is rejected
+- [ ] auto-fix tried once on a red Dependabot PR (or noted as waiting for one)
