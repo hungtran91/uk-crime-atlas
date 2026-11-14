@@ -149,6 +149,9 @@ planted errors. Windows commands; use `.venv/bin/python` elsewhere:
 .venv\Scripts\python -m pytest
 ```
 
+On every pull request, GitHub Actions runs `npm test`, `npm run lint` and `pytest`
+(`.github/workflows/ci.yml`); Vercel builds the preview.
+
 ## Folder structure
 
 ```
