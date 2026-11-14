@@ -15,7 +15,7 @@
     "geo": "mapshaper data/raw/pfa.geojson -simplify 15% keep-shapes -clean -rename-layers pfa -o public/geo/pfa.topo.json format=topojson quantization=10000"
   },
   "dependencies": {
-    "d3-geo": "3.1.1",
+    "d3-geo": "3.1.2",
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -25,14 +25,14 @@
   },
   "devDependencies": {
     "@types/d3-geo": "3.1.1",
-    "@types/node": "^24.19.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/topojson-client": "3.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
-    "mapshaper": "0.7.83",
+    "mapshaper": "0.7.101",
     "typescript": "^5",
-    "vitest": "^5.0.2"
+    "vitest": "^5.1.0"
   }
 }
