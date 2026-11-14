@@ -64,7 +64,7 @@ The full version, including which force-months are missing and why, is on the
 - [Next.js](https://nextjs.org/) 16 (App Router), React 19, TypeScript strict; every page is static
 - Map: `d3-geo` + `topojson-client` rendering SVG (no tiles, no map library)
 - Charts: [Recharts](https://recharts.org/)
-- Tests: [Vitest](https://vitest.dev/)
+- Tests: [Vitest](https://vitest.dev/) for `lib/`, [pytest](https://pytest.org/) for the Python scripts
 - Data pipeline: Python 3 + pandas, [mapshaper](https://github.com/mbloch/mapshaper) for the boundaries
 - Hosting: Vercel
 
@@ -138,6 +138,17 @@ npm run lint
 `lib/metrics.real.test.ts` checks the metrics against `data/reference.json`, which `validate.py`
 computes independently in Python from the same data.
 
+The Python pipeline has its own tests in `scripts/tests/` (pytest). They build a tiny synthetic
+archive, force lookup and population table in a temporary folder, so they need no network and no
+`data/raw/`. They cover the exclusions (anti-social behaviour, British Transport Police, PSNI),
+missing force-months (no rows, never zero), the 50% incomplete rule, and `validate.py` failing on
+planted errors. Windows commands; use `.venv/bin/python` elsewhere:
+
+```
+.venv\Scripts\python -m pip install -r requirements-dev.txt
+.venv\Scripts\python -m pytest
+```
+
 ## Folder structure
 
 ```
@@ -146,7 +157,7 @@ components/    map, charts, cards, filter bar
 lib/           data loading and metrics (rates, deltas, ranks); pure and tested
 data/          generated JSON (committed); data/raw/ holds downloads (not committed)
 public/geo/    pfa.topo.json
-scripts/       ingest.py, validate.py, force_lookup.csv
+scripts/       ingest.py, validate.py, force_lookup.csv; tests/ (pytest)
 design/        design export, reference only; never imported by the app
 docs/          PLAN.md (phases and acceptance checks), screenshots
 ```

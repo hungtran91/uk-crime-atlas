@@ -49,7 +49,7 @@ Public GitHub repo, deployed on Vercel Hobby.
 ## Stack (locked; ask before changing)
 - Next.js latest stable, App Router, TypeScript strict, fully static pages
 - Map: d3-geo + topojson-client rendering SVG. No Leaflet, no map tiles.
-- Charts: Recharts. Tests: Vitest for lib/.
+- Charts: Recharts. Tests: Vitest for lib/, pytest for scripts/ (requirements-dev.txt).
 - Styling: tokens ported from design/ds/atlas-ds.css; Geist + Geist Mono via next/font
 - Data: Python 3 + pandas → static JSON committed in /data
 - No API routes, no database, no auth
@@ -62,7 +62,7 @@ lib/           data loading + metrics (rates, deltas, ranks), pure + tested
 data/          generated JSON (committed)
 data/raw/      downloaded CSV/XLSX (gitignored)
 public/geo/    pfa.topo.json (committed)
-scripts/       ingest.py, validate.py, force_lookup.csv
+scripts/       ingest.py, validate.py, force_lookup.csv; tests/ (pytest, synthetic fixtures)
 docs/PLAN.md   phases + acceptance checks
 
 ## Data sources (Open Government Licence v3.0; attribute in footer + /methodology)
@@ -109,6 +109,8 @@ py -3.14 -m venv .venv                          # once; fall back to py -3.11 if
 npm run geo                                     # data/raw/pfa.geojson → public/geo/pfa.topo.json (mapshaper)
 .venv\Scripts\python scripts\validate.py        # sanity checks; non-zero exit on failure; writes data/reference.json
 .venv\Scripts\python scripts\validate.py --spot kent 2026-06   # compare one force-month with its raw CSV
+.venv\Scripts\python -m pip install -r requirements-dev.txt     # once; adds pytest
+.venv\Scripts\python -m pytest                  # scripts/tests: ingest.py + validate.py on synthetic fixtures (no network, no data/raw)
 Never call bare `python` (two versions installed). Process CSVs file by file.
 
 Refresh to a newer archive (local only): set ARCHIVE_MONTH and ARCHIVE_SIZE in scripts/ingest.py,
