@@ -32,7 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
     "mapshaper": "0.7.101",
-    "typescript": "^5",
+    "typescript": "^7",
     "vitest": "^5.1.0"
   }
 }
